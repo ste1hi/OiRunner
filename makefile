@@ -1,20 +1,23 @@
-.PHONY: build install release clean clean-file
+.PHONY: build install release clean clean-file lint test
 
-build:lint
+build:lint test
 	python3 -m build
 
 install:build
 	pip3 install .
 
-release: build
+release:build
 	python3 -m twine upload dist/*
 
-clean:
-	rm -rf dist build *.egg-info
+clean:clean-file
 	pip uninstall -y OiRunner
 
 lint:
-	flake8 OiRunner/ --count --statistics --max-line-length=127
+	flake8 OiRunner/ tests/ --count --statistics --max-line-length=127
+
+test:
+	coverage run --source OiRunner -m unittest
+	coverage report
 
 clean-file:
-	rm -rf dist build *.egg-info
+	rm -rf dist build *.egg-info htmlcov .coverage

@@ -8,7 +8,10 @@ import time
 
 class BetterRunner:
     def __init__(self):
-        pass
+        self.args = None
+        self.input_file = None
+        self.output_file = None
+        self.answer_file = None
 
     def cmd_parse(self):
         '''
@@ -29,7 +32,6 @@ class BetterRunner:
         pa.add_argument('--onlyinput', action='store_true', help="使用文件输入（-j时无效）")
         pa.add_argument('--onlyoutput', action='store_true', help="使用文件输出（-j时无效）")
         self.args = pa.parse_args()
-
         self.args.use_multiple_processes = False
         self.input_file = self.args.inputfile
         self.output_file = self.args.outputfile
@@ -50,10 +52,10 @@ class BetterRunner:
                 print("编译成功")
             else:
                 print("编译失败")
-                exit(0)
+                sys.exit()
         except KeyboardInterrupt:
             print("\n手动退出，祝AC~(^v^)")
-            exit(0)
+            sys.exit()
 
     def _modify_file(self, file_name, file_type):
         '''
@@ -71,7 +73,7 @@ class BetterRunner:
                     if not a:
                         print(f"error:{file_name}文件为空")
                         shutil.rmtree('~tmp')
-                        exit(0)
+                        sys.exit()
                     with open(f"~tmp/{i}.{file_type}", "w") as _f:
                         _f.write(a)
                     i += 1
@@ -178,7 +180,7 @@ class BetterRunner:
         try:
             if self.args.directgdb:
                 self._debug()
-                exit(0)
+                sys.exit()
 
             if self.args.judge:
                 flag = 0
