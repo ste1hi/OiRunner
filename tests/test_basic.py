@@ -1,7 +1,6 @@
 import unittest
 import os
 import sys
-import subprocess
 from unittest import mock
 from OiRunner import BetterRunner
 
@@ -10,8 +9,13 @@ PY_FILE_PATH = '../../OiRunner/BetterRunner.py'
 
 class TestRunner(unittest.TestCase):
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(self):
         os.chdir("tests/data")
+
+    def setUp(self):
+        self.runner = BetterRunner.BetterRunner()
+        self.runner.args = mock.Mock(filename='', name='')
 
     def clean(self, filename, filetype=None):
         if filetype == "executable":
@@ -30,24 +34,23 @@ class TestRunner(unittest.TestCase):
         self.clean("~temp")
         self.clean("~err_temp")
 
-    def test_compile(self):
-        runner = BetterRunner.BetterRunner()
-        runner.args = mock.Mock(filename='', name='')
-        runner.args.filename = 'success'
-        runner.args.name = 'a.out'
+    def test_success_compile(self):
+        self.runner.args.filename = 'success'
+        self.runner.args.name = 'a.out'
 
         out = sys.stdout
         with open("~temp", "w") as f:
             sys.stdout = f
-            runner.compile()
+            self.runner.compile()
         sys.stdout = out
 
         with open("~temp", "r") as f:
             self.assertEqual(f.read(), "编译成功\n")
         os.remove("~temp")
 
-        runner.args.filename = 'fail'
-        runner.args.name = 'a.out'
+    def test_fail_compile(self):
+        self.runner.args.filename = 'fail'
+        self.runner.args.name = 'a.out'
 
         out = sys.stdout
         with self.assertRaises(SystemExit):
@@ -57,10 +60,28 @@ class TestRunner(unittest.TestCase):
                 def wait():
                     return -1
 
-                subprocess.Popen = mock.Mock()
-                subprocess.Popen.return_value = mock.Mock(wait=wait)
-                runner.compile()
+                new_mock = mock.Mock(wait=wait)
+                new_mock.return_value = -1
+                with mock.patch('subprocess.Popen', return_value=new_mock):
+                    self.runner.compile()
+
         sys.stdout = out
 
         with open("~temp", "r") as f:
             self.assertEqual(f.read(), "编译失败\n")
+
+    @mock.patch('builtins.KeyboardInterrupt')
+    def test_exit_manully(self, interrupt):
+        self.runner.args.filename = 'success'
+        self.runner.args.name = 'a.out'
+
+        out = sys.stdout
+        with self.assertRaises(SystemExit):
+            with open("~temp", "w") as f:
+                sys.stdout = f
+                with interrupt:
+                    self.runner.compile()
+
+        sys.stdout = out
+        with open("~temp", "r") as f:
+            self.assertEqual(f.read(), "\n手动退出，祝AC~(^v^)\n")
