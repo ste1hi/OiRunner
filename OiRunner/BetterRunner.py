@@ -18,42 +18,43 @@ class BetterRunner:
         命令行解析
         '''
         pa = argparse.ArgumentParser()
-        pa.add_argument('filename', help="要编译的cpp文件(省略'.cpp')")
-        pa.add_argument('-n', '--name', default="a", help="生成的可执行文件名(省略'.exe')")
-        pa.add_argument('-j', '--judge', action='store_true', help="是否评测")
+        pa.add_argument("filename", help="要编译的cpp文件(省略'.cpp')")
+        pa.add_argument("-n", "--name", default="a", help="生成的可执行文件名(省略'.exe')")
+        pa.add_argument("-j", "--judge", action="store_true", help="是否评测")
         # pa.add_argument('-u','--use_multiple_processes',action='store_true',help="是否使用多进程评测")
-        pa.add_argument('-p', '--print', action='store_true', help="是否显示输出")
-        pa.add_argument('-if', '--inputfile', default='in.txt', help="输入文件名")
-        pa.add_argument('-of', '--outputfile', default='out.txt', help="输出文件名")
-        pa.add_argument('-af', '--answerfile', default='ans.txt', help="答案文件名")
-        pa.add_argument('-g', '--gdb', action='store_true', help="答案错误时是否使用gdb打开")
-        pa.add_argument('-gf', '--gdbfile', default=None, help="gdb调试输入文件")
-        pa.add_argument('--directgdb', action='store_true', help="直接使用gdb调试")
-        pa.add_argument('--onlyinput', action='store_true', help="使用文件输入（-j时无效）")
-        pa.add_argument('--onlyoutput', action='store_true', help="使用文件输出（-j时无效）")
+        pa.add_argument("-p", "--print", action="store_true", help="是否显示输出")
+        pa.add_argument("-if", "--inputfile", default="in.txt", help="输入文件名")
+        pa.add_argument("-of", "--outputfile", default="out.txt", help="输出文件名")
+        pa.add_argument("-af", "--answerfile", default="ans.txt", help="答案文件名")
+        pa.add_argument("-g", "--gdb", action="store_true", help="答案错误时是否使用gdb打开")
+        pa.add_argument("--directgdb", action="store_true", help="直接使用gdb调试")
+        pa.add_argument("--onlyinput", action="store_true", help="使用文件输入（-j时无效）")
+        pa.add_argument("--onlyoutput", action="store_true", help="使用文件输出（-j时无效）")
         self.args = pa.parse_args()
         self.args.use_multiple_processes = False
         self.input_file = self.args.inputfile
         self.output_file = self.args.outputfile
         self.answer_file = self.args.answerfile
         if sys.platform == "linux":
-            self.args.name = "./" + self.args.name + '.out'
+            self.args.name = "./" + self.args.name + ".out"
         elif sys.platform == "win32":
-            self.args.name = self.args.name + '.exe'
+            self.args.name = self.args.name + ".exe"
 
     def compile(self):
         '''
         编译文件
         '''
         try:
-            compile = sp.Popen(['g++', self.args.filename + '.cpp', '-g', '-o', self.args.name])
+            compile = sp.Popen(["g++", self.args.filename + ".cpp", "-g", "-o", self.args.name])
             compile.wait()
             if compile.returncode == 0:
                 print("编译成功")
             else:
                 print("编译失败")
                 sys.exit()
-        except KeyboardInterrupt:
+
+        # Can't sent Ctrl+c and get the messages.
+        except KeyboardInterrupt:  # pragma: no cover
             print("\n手动退出，祝AC~(^v^)")
             sys.exit()
 
@@ -63,21 +64,28 @@ class BetterRunner:
         '''
         i = 1
         a = ""
-        if not os.path.exists('~tmp'):
-            os.mkdir('~tmp')
+        flag = 0
+        if not os.path.exists("~tmp"):
+            os.mkdir("~tmp")
         with open(file_name, "r") as f:
             for line in f:
+                flag = 1
                 if line.rstrip():
                     a += f"{line}"
                 else:
                     if not a:
                         print(f"error:{file_name}文件为空")
-                        shutil.rmtree('~tmp')
+                        shutil.rmtree("~tmp")
                         sys.exit()
                     with open(f"~tmp/{i}.{file_type}", "w") as _f:
                         _f.write(a)
                     i += 1
                     a = ""
+            if not flag:
+                print(f"error:{file_name}文件为空")
+                shutil.rmtree("~tmp")
+                sys.exit()
+
         if a:
             with open(f"~tmp/{i}.{file_type}", "w") as _f:
                 _f.write(a)
@@ -147,36 +155,20 @@ class BetterRunner:
         复制文件，为多进程评测准备
         '''
         for file_num in range(1, i + 1):
-            dst = os.path.join(r'~tmp/', f"{file_num}_{self.args.name}")
+            dst = os.path.join(r"~tmp/", f"{file_num}_{self.args.name}")
             shutil.copy2(self.args.name, dst)
 
     def _debug(self):
-        """
+        '''
         使用gdb调试
-        """
-        if self.args.gdbfile is None:
-            gdb = sp.Popen(['gdb', self.args.name])
-            gdb.wait()
-        else:
-            with open(self.args.gdbfile, "r") as f:
-                gdb = sp.Popen(['gdb', self.args.name], stdin=sp.PIPE, text=True)
-                for line in f:
-                    if line.rstrip():
-                        line = str(line.rstrip()) + "\n"
-                        # if line != "r":
-                        #     line = line + "\n"
-                        gdb.stdin.write(line)
-                        gdb.stdin.flush()
-                # print(gdb.stdout.read())
-                # gdb.stdin.close()
-
-                gdb.stdin = sys.stdin
-                gdb.wait()
+        '''
+        gdb = sp.Popen(["gdb", self.args.name])
+        gdb.wait()
 
     def run(self):
-        """
+        '''
         程序主函数
-        """
+        '''
         try:
             if self.args.directgdb:
                 self._debug()
@@ -185,8 +177,8 @@ class BetterRunner:
             if self.args.judge:
                 flag = 0
 
-                if os.path.exists('~tmp'):
-                    shutil.rmtree('~tmp')
+                if os.path.exists("~tmp"):
+                    shutil.rmtree("~tmp")
                 self._modify_file(self.args.inputfile, "in")
                 i = self._modify_file(self.args.answerfile, "ans")
                 if self.args.use_multiple_processes:
@@ -206,7 +198,7 @@ class BetterRunner:
 
                 print(f"#final:正确率{((i - flag) / i) : .2%}")
                 self._output(i)
-                shutil.rmtree('~tmp')
+                shutil.rmtree("~tmp")
 
                 if self.args.gdb and flag > 0:
                     self._debug()
@@ -229,8 +221,8 @@ class BetterRunner:
                     print(f"返回值为{run.returncode}，程序运行可能有问题")
 
         except KeyboardInterrupt:
-            if os.path.exists('~tmp'):
-                shutil.rmtree('~tmp')
+            if os.path.exists("~tmp"):
+                shutil.rmtree("~tmp")
             print("\n手动退出，祝AC~(^v^)")
 
 
