@@ -14,6 +14,7 @@ clean:clean-file
 
 lint:
 	flake8 OiRunner/ tests/ --count --statistics --max-line-length=127
+	mypy OiRunner/
 
 test:
 	coverage run --source OiRunner -m unittest

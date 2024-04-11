@@ -6,6 +6,13 @@ from OiRunner import BetterRunner
 
 PY_FILE_PATH = "../../OiRunner/BetterRunner.py"
 FILEOUT = "#1:\nfile1\n#2:\nfile2\n#3:\nfile3\n"
+GARBAGE = ["a.out", "a.exe", "~temp", "~err_temp", "~out"]
+
+
+def clean(filelist):
+    for filename in filelist:
+        if os.path.exists(filename):
+            os.remove(filename)
 
 
 class TestRunner(unittest.TestCase):
@@ -19,22 +26,8 @@ class TestRunner(unittest.TestCase):
         self.runner = BetterRunner.BetterRunner()
         self.runner.args = mock.Mock(filename="", name="")
 
-    def clean(self, filename, filetype=None):
-        if filetype == "executable":
-            if sys.platform == "linux":
-                if os.path.exists(filename + ".out"):
-                    os.remove(filename + ".out")
-            elif sys.platform == "win32":
-                if os.path.exists(filename + ".exe"):
-                    os.remove(filename + ".exe")
-        else:
-            if os.path.exists(filename):
-                os.remove(filename)
-
     def tearDown(self):
-        self.clean("a", "executable")
-        self.clean("~temp")
-        self.clean("~err_temp")
+        clean(GARBAGE)
 
     def test_success_compile(self):
         self.runner.args.filename = "success"
@@ -78,26 +71,11 @@ class TestParser(unittest.TestCase):
     def setUp(self):
         self.runner = BetterRunner.BetterRunner()
 
-    def clean(self, filename, filetype=None):
-        if filetype == "executable":
-            if sys.platform == "linux":
-                if os.path.exists(filename + ".out"):
-                    os.remove(filename + ".out")
-            elif sys.platform == "win32":
-                if os.path.exists(filename + ".exe"):
-                    os.remove(filename + ".exe")
-        else:
-            if os.path.exists(filename):
-                os.remove(filename)
-
     def tearDown(self):
-        self.clean("a", "executable")
-        self.clean("~temp")
-        self.clean("~err_temp")
+        clean(GARBAGE)
 
     def short(self, pla):
         self.assertEqual(self.runner.args.filename, "test")
-        self.assertFalse(self.runner.args.use_multiple_processes)
 
         if pla == "linux":
             self.assertEqual(self.runner.args.name, "./run.out")
@@ -173,27 +151,12 @@ class TestParser(unittest.TestCase):
 class TestFunction(unittest.TestCase):
 
     def setUp(self):
-        self.runner = BetterRunner.BetterRunner()
+        self.func = BetterRunner.Functions()
         if os.getcwd().split(os.sep)[-1] != "data":
             os.chdir("tests/data")
 
-    def clean(self, filename, filetype=None):
-        if filetype == "executable":
-            if sys.platform == "linux":
-                if os.path.exists(filename + ".out"):
-                    os.remove(filename + ".out")
-            elif sys.platform == "win32":
-                if os.path.exists(filename + ".exe"):
-                    os.remove(filename + ".exe")
-        else:
-            if os.path.exists(filename):
-                os.remove(filename)
-
     def tearDown(self):
-        self.clean("a", "executable")
-        self.clean("~temp")
-        self.clean("~err_temp")
-        self.clean("~out")
+        clean(GARBAGE)
 
     def test_modify_file(self):
         for i in range(1, 3):
@@ -201,13 +164,13 @@ class TestFunction(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 with open("~temp", "w") as f:
                     sys.stdout = f
-                    self.runner._modify_file(f"empty{i}.in", "in")
+                    self.func._modify_file(f"empty{i}.in", "in")
             self.assertFalse(os.path.exists("~tmp"))
             with open("~temp", "r") as f:
                 self.assertEqual(f.read(), f"error:empty{i}.in文件为空\n")
             sys.stdout = out
 
-        ret_code = self.runner._modify_file("a.in", "in")
+        ret_code = self.func._modify_file("a.in", "in")
         self.assertEqual(ret_code, 3)
         self.assertTrue(os.path.exists("~tmp"))
         for i in range(1, 4):
@@ -219,10 +182,7 @@ class TestFunction(unittest.TestCase):
     def test_output(self):
         for i in range(1, 4):
             os.rename(f"~tmp{os.sep}{i}.in", f"~tmp{os.sep}{i}.out")
-        sys.argv = ["BetterRunner.py", "test"]
-        self.runner.cmd_parse()
-        self.runner.args.outputfile = "~out"
-        self.runner._output(3)
+        self.func._output(3, "~out")
 
         with open("~out", "r") as f:
             self.assertEqual(f.read(), FILEOUT)

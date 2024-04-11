@@ -12,7 +12,7 @@ setup(
     include_package_data = True,
     entry_points={
         'console_scripts': [
-            'oirun = OiRunner.run:main' 
+            'oirun = OiRunner.BetterRunner:main' 
         ]
     }
 )
