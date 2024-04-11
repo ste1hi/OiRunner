@@ -126,7 +126,8 @@ class BetterRunner:
             print("\n手动退出，祝AC~(^v^)")
             sys.exit()
 
-    def _check(self, opt_file: str, ipt_file: str, ans_file: str, file_num: int = 0, run_file: str | None = None) -> bool:
+    def _check(self, opt_file: str, ipt_file: str, ans_file: str,
+               file_num: int = 0, run_file: str | None = None, if_print: bool | None = None) -> bool:
         '''
         本地评测，并获取结果。
 
@@ -138,13 +139,15 @@ class BetterRunner:
         run_file -- 可执行文件名（None为使用命令行参数值）
 
         返回值：
-        is_pass -- 测试是否通过
+        if_pass -- 测试是否通过
         '''
 
         print(f"#{file_num}:")
 
         if run_file is None:
             run_file = self.args.name
+        if if_print is None:
+            if_print = self.args.print
 
         with open(opt_file, "w") as _out, open(ipt_file, "r") as _in:
             run = sp.Popen([run_file], stdin=_in, stdout=_out)
@@ -160,14 +163,14 @@ class BetterRunner:
             ans_list = [line.rstrip() for line in ans if line.rstrip()]
             my_ans_list = [line.rstrip() for line in my_ans if line.rstrip()]
             if ans_list == my_ans_list:
-                if self.args.print:
+                if if_print:
                     print(f"答案正确，用时{now:.5}")
                 else:
                     print("答案正确")
                 return True
             else:
-                if self.args.print:
-                    if len(ans_list) < 10:
+                if if_print:
+                    if len(ans_list[0]) < 10:
                         print(f"标准答案：{ans_list}\n实际答案：{my_ans_list}")
                     else:
                         print("数据行数过大")

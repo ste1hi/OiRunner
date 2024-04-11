@@ -1,6 +1,7 @@
 import unittest
 import os
 import sys
+import shutil
 from unittest import mock
 from OiRunner import BetterRunner
 
@@ -186,3 +187,24 @@ class TestFunction(unittest.TestCase):
 
         with open("~out", "r") as f:
             self.assertEqual(f.read(), FILEOUT)
+
+        shutil.rmtree("~tmp")
+
+
+class TestCheck(unittest.TestCase):
+
+    def setUp(self):
+        self.runner = BetterRunner.BetterRunner()
+        if os.getcwd().split(os.sep)[-1] != "data":
+            os.chdir("tests/data")
+
+    def tearDown(self):
+        clean(GARBAGE)
+
+    # def test_pass(self):
+    #     out = sys.stdout
+    #     with open("~temp", "w") as f:
+    #         sys.stdout = f
+    #         self.runner._check("check_data/1.out", "check_data/1.in", "check_data/1.ans", 1, "check.cpp")
+
+    #     sys.stdout = out

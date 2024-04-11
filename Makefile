@@ -21,4 +21,4 @@ test:
 	coverage report
 
 clean-file:
-	rm -rf dist build *.egg-info htmlcov .coverage
+	rm -rf dist build *.egg-info htmlcov .coverage .mypy_cache OiRunner/__pycache__ tests/__pycache__
