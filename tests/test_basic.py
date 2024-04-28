@@ -42,7 +42,7 @@ class TestRunner(unittest.TestCase):
         sys.stdout = out
 
         with open("~temp", "r") as f:
-            self.assertEqual(f.read(), "编译成功\n")
+            self.assertEqual(f.read(), "Compilation successful.\n")
         os.remove("~temp")
 
     def test_fail_compile(self):
@@ -65,7 +65,7 @@ class TestRunner(unittest.TestCase):
         sys.stdout = out
 
         with open("~temp", "r") as f:
-            self.assertEqual(f.read(), "编译失败\n")
+            self.assertEqual(f.read(), "Compilation failed.\n")
 
 
 class TestParser(unittest.TestCase):
@@ -87,6 +87,7 @@ class TestParser(unittest.TestCase):
         self.assertTrue(self.runner.args.judge)
         self.assertTrue(self.runner.args.print)
         self.assertTrue(self.runner.args.gdb)
+        self.assertTrue(self.runner.args.directgdb)
 
         self.assertEqual(self.runner.args.inputfile, "in")
         self.assertEqual(self.runner.args.outputfile, "out")
@@ -94,7 +95,7 @@ class TestParser(unittest.TestCase):
 
     def test_short_parser(self):
         sys.argv = ["BetterRunner.py", "test", "-if", "in", "-of", "out", "-j",
-                    "-af", "ans", "-n", "run", "-p", "-g"]
+                    "-af", "ans", "-n", "run", "-p", "-g", "-d"]
 
         sys.platform = "linux"
         self.runner.cmd_parse()
@@ -169,7 +170,7 @@ class TestFunction(unittest.TestCase):
                     self.func._modify_file(f"empty{i}.in", "in")
             self.assertFalse(os.path.exists("~tmp"))
             with open("~temp", "r") as f:
-                self.assertEqual(f.read(), f"error:empty{i}.in文件为空\n")
+                self.assertEqual(f.read(), f"error:empty{i}.in is empty.\n")
             sys.stdout = out
 
         ret_code = self.func._modify_file("a.in", "in")
