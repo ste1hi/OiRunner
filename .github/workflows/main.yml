@@ -12,7 +12,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
@@ -47,6 +47,7 @@ jobs:
           mypy OiRunner/
 
       - name: tests in ${{ matrix.python-version }}
-        run: |
-          coverage run --source OiRunner -m unittest
-          coverage report
+        run: coverage run --source OiRunner -m unittest
+
+      - name: Get report in ${{ matrix.python-version }}
+        run: coverage report

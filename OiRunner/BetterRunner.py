@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import subprocess as sp
 import argparse
 import sys
