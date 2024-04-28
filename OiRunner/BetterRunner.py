@@ -5,6 +5,7 @@ import sys
 import os
 import shutil
 import time
+from typing import Optional
 
 
 class Functions:
@@ -127,7 +128,7 @@ class BetterRunner:
             sys.exit()
 
     def _check(self, opt_file: str, ipt_file: str, ans_file: str,
-               file_num: int = 0, run_file: str | None = None, if_print: bool | None = None) -> bool:
+               file_num: int = 0, run_file: Optional[str] = None, if_print: Optional[bool] = None) -> bool:
         '''
         Local evaluation and get results.
 
