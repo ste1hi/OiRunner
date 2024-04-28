@@ -1,0 +1,8 @@
+build
+setuptools
+wheel
+twine
+
+flake8
+mypy
+coverage

@@ -6,16 +6,16 @@ jobs:
   build:
     strategy:
       matrix:
-        # python-version: ['3.6', '3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.7', '3.8']
         os: [ubuntu-latest, windows-latest]
     
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
-      # - name: Set up Python ${{ matrix.python-version }}
-      #   uses: actions/setup-python@v4
-      #   with:
-      #     python-version: ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
 
       - name: Install gdb
         if: matrix.os == 'ubuntu-latest'
@@ -25,13 +25,28 @@ jobs:
       
       - name: Install g++
         if: matrix.os == 'windows-latest'
-        run: choco install mingw -y --no-progress
-      - name: Build
-        if: matrix.os == 'windows-latest'
         run: |
+          choco install mingw -y --no-progress
           $env:PATH += ";C:\tools\mingw64\bin"
 
+      - name: Check environment
+        run: |
+          g++ --version
+          gcc --version
+          gdb --version
+      
+      - name: Install dependencies in ${{ matrix.python-version }}
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-      - run: g++ --version
-      - run: gcc --version
-      - run: gdb --version
+      - name: Lint in ${{ matrix.python-version }}
+        run: |
+          flake8 OiRunner/ tests/ --count --statistics --max-line-length=127
+          mypy OiRunner/
+
+      - name: tests in ${{ matrix.python-version }}
+        run: |
+          coverage run --source OiRunner -m unittest
+          coverage report
+	
