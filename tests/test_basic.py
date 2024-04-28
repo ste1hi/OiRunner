@@ -211,10 +211,10 @@ class TestCheck(unittest.TestCase):
             self.runner.args.if_print = True
             if sys.platform == "linux":
                 if_pass = self.runner._check("check_data/1.out", "check_data/1.in",
-                                            "check_data/1.ans", 1, "../../tests/data/check.out")
+                                             "check_data/1.ans", 1, "../../tests/data/check.out")
             else:
                 if_pass = self.runner._check("check_data/1.out", "check_data/1.in",
-                                            "check_data/1.ans", 1, "../../tests/data/check.exe")
+                                             "check_data/1.ans", 1, "../../tests/data/check.exe")
             self.assertTrue(if_pass)
 
         sys.stdout = out
