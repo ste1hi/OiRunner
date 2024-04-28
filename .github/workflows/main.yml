@@ -23,17 +23,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install gdb
       
-      - name: Install Chocolatey
-        if: matrix.os == 'windows-latest'
-        run: |
-          Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
       - name: Install g++
         if: matrix.os == 'windows-latest'
         run: choco install mingw -y --no-progress
       - name: Build
         if: matrix.os == 'windows-latest'
         run: |
-          SET PATH=C:\tools\mingw64\bin;%PATH%
+          $env:PATH += ";C:\tools\mingw64\bin"
 
 
       - run: g++ --version
