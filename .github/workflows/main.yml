@@ -29,6 +29,7 @@ jobs:
         run: |
           choco install mingw -y --no-progress
           $env:PATH += ";C:\tools\mingw64\bin"
+          set PYTHONIOENCODING=utf-8
 
       - name: Check environment
         run: |
