@@ -64,3 +64,8 @@ jobs:
 
       - name: Get report in ${{ matrix.python-version }}
         run: coverage report
+      
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
