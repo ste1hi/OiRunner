@@ -2,7 +2,11 @@ name: check
 
 on: 
   push:
-    branches: [master]
+    paths:
+      - "OiRunner/**"
+      - "tests/**"
+      - "setup.py"
+      - ".github/workflows/**"
   pull_request:
     paths:
       - "OiRunner/**"
