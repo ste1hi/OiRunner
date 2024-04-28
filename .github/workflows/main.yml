@@ -6,16 +6,16 @@ jobs:
   build:
     strategy:
       matrix:
-        python-version: ['3.6', '3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
+        # python-version: ['3.6', '3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
         os: [ubuntu-latest, windows-latest]
     
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
+      # - name: Set up Python ${{ matrix.python-version }}
+      #   uses: actions/setup-python@v4
+      #   with:
+      #     python-version: ${{ matrix.python-version }}
 
       - name: Install gdb
         if: matrix.os == 'ubuntu-latest'
@@ -23,13 +23,19 @@ jobs:
           sudo apt-get update
           sudo apt-get install gdb
       
+      - name: Install Chocolatey
+        if: matrix.os == 'windows-latest'
+        run: |
+          Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
       - name: Install g++
         if: matrix.os == 'windows-latest'
-        uses: microsoft/setup-cpp@v1
-        with:
-          compilerType: g++
+        run: choco install mingw -y --no-progress
+      - name: Build
+        if: matrix.os == 'windows-latest'
+        run: |
+          SET PATH=C:\tools\mingw64\bin;%PATH%
 
-          
+
       - run: g++ --version
       - run: gcc --version
       - run: gdb --version
