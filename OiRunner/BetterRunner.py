@@ -13,7 +13,7 @@ class Functions:
 
     def _modify_file(self, file_name: str, file_type: str) -> int:
         '''
-        将文件按行分割为多个文件,输出文件位于~tmp/。
+        Split the file into multiple files by line, with the output file located at ~tmp/.
 
         参数：
         file_name -- 传入文件名
@@ -137,6 +137,7 @@ class BetterRunner:
         ans_file -- 答案文件名
         file_num -- 文件编号
         run_file -- 可执行文件名（None为使用命令行参数值）
+        if_print -- 是否输出（None为使用命令行参数值）
 
         返回值：
         if_pass -- 测试是否通过
@@ -170,16 +171,22 @@ class BetterRunner:
                 return True
             else:
                 if if_print:
-                    if len(ans_list[0]) < 10:
+                    if len(ans_list) < 10:
                         print(f"标准答案：{ans_list}\n实际答案：{my_ans_list}")
                     else:
-                        print("数据行数过大")
+                        print("答案行数过大")
                     print("答案错误")
                     print("错误数据：")
                     with open(ipt_file, "r") as _in:
-                        for line in _in:
-                            if line.rstrip():
-                                print(line.rstrip())
+                        data_list = [line.rstrip() for line in _in if line.rstrip()]
+                        data: str = ""
+                        for data_line in data_list:
+                            data += data_line
+                            data += "\n"
+                        if len(data) < 500:
+                            print(data)
+                        else:
+                            print("数据字数过多")
                 else:
                     print("答案错误")
 

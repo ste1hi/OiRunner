@@ -198,13 +198,18 @@ class TestCheck(unittest.TestCase):
         if os.getcwd().split(os.sep)[-1] != "data":
             os.chdir("tests/data")
 
-    def tearDown(self):
-        clean(GARBAGE)
+    # def tearDown(self):
+    #     clean(GARBAGE)
 
-    # def test_pass(self):
-    #     out = sys.stdout
-    #     with open("~temp", "w") as f:
-    #         sys.stdout = f
-    #         self.runner._check("check_data/1.out", "check_data/1.in", "check_data/1.ans", 1, "check.cpp")
+    def test_pass(self):
+        out = sys.stdout
+        with open("~temp", "w") as f:
+            sys.stdout = f
+            sys.argv = ["BetterRunner.py", "test"]
+            self.runner.cmd_parse()
+            self.runner.args.if_print = True
+            if_pass = self.runner._check("check_data/1.out", "check_data/1.in",
+                                         "check_data/1.ans", 1, "../../tests/data/check.out")
+            self.assertTrue(if_pass)
 
-    #     sys.stdout = out
+        sys.stdout = out

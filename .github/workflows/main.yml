@@ -1,0 +1,17 @@
+name: check
+
+on: [push]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        python-version: ['3.6', '3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
+        os: [ubuntu-latest, macos-latest, macos-14, windows-latest]
+    
+    runs-on: ${{ matrix.os }}
+    steps:
+      - run: |
+          g++ --version
+          gcc --version
+          gdb --version
