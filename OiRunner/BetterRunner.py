@@ -214,7 +214,7 @@ class BetterRunner:
                     if not judge:
                         flag += 1
 
-                print(f"#final:正确率{((i - flag) / i) : .2%}")
+                print(f"#final:正确率{((i - flag) / i): .2%}")
                 self.func._output(i, self.output_file)
                 shutil.rmtree("~tmp")
 
