@@ -59,7 +59,7 @@ class Functions:
 
     def _output(self, num: int, opt_file: str) -> None:
         '''
-        Merge and output the splited files.
+        Merge and output the split files.
 
         Args:
         num -- The number of files to merge.
