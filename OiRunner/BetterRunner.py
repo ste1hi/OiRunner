@@ -59,7 +59,7 @@ class Functions:
 
     def _output(self, num: int, opt_file: str) -> None:
         '''
-        Merge and output the splited files.
+        Merge and output the split files.
 
         Args:
         num -- The number of files to merge.
@@ -243,7 +243,8 @@ class BetterRunner:
                 if run.returncode != 0:
                     print(f"The return value is{run.returncode}. There may be issues with the program running.")
 
-        except KeyboardInterrupt:
+        # Can't sent Ctrl+c and get the messages.
+        except KeyboardInterrupt:  # pragma: no cover
             if os.path.exists("~tmp"):
                 shutil.rmtree("~tmp")
             print("\nManually exit, wish AC~(^ v ^)")
