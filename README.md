@@ -33,6 +33,11 @@ This command will compile your program file and run the executable file in comma
 
 ## Advanced Usage
 
-### Judge program result
+- [Judge program result](docs/judge.md)
+- [Automatic operation](docs/automation.md)
 
-- []()
+
+# License
+Copyright ste1hi, 2024.
+
+Distributed under the terms of the [MIT License](./LICENSE).
