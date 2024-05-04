@@ -12,6 +12,6 @@ int main(){
         cout << 2;
     }
     else{
-        return -255;
+        return 1;
     }
 }
