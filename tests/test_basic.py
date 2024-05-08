@@ -336,7 +336,7 @@ class Testrun(unittest.TestCase):
             with mock.patch("subprocess.Popen", return_value=new_mock):
                 self.runner.run()
 
-    def test_nojudge(self):
+    def test_not_judge(self):
         sys.argv = ["BetterRunner.py", "test"]
         self.runner.cmd_parse()
         self.runner.args.onlyinput = True
