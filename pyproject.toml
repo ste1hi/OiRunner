@@ -1,3 +1,21 @@
 [build-system]
 requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "OiRunner"
+authors = [{name = "ste1", email = "1874076121@qq.com"}]
+description = "This package is designed to help oier compile the cpp file conveniently."
+readme = "README.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE"}
+dynamic = ["version"]
+classifiers = [
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: POSIX :: Linux",
+        "Operating System :: Microsoft :: Windows",
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "OiRunner.__version__"}
