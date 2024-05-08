@@ -2,7 +2,6 @@ from setuptools import setup, find_packages
 
 setup(
     name = 'OiRunner',
-    version = '0.0.3',
     author = 'ste1',
     author_email = '1874076121@qq.com',
     description = 'This package is designed to help oier compile the cpp file conveniently.',
