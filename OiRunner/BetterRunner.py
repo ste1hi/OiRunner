@@ -3,6 +3,7 @@ import subprocess as sp
 import argparse
 import sys
 import os
+import re
 import shutil
 import time
 from typing import Optional
@@ -23,10 +24,10 @@ class Functions:
             file_type -- The filename extension of input file.
 
         Returns:
-        i -- Number of output files.
+            i -- Number of output files.
 
         Raise:
-        SystemExit -- The file is empty.
+            SystemExit -- The file is empty.
         '''
         i = 1
         a = ""
@@ -35,6 +36,7 @@ class Functions:
             os.mkdir("~tmp")
         with open(file_name, "r") as f:
             for line in f:
+                file_path = os.path.join("~tmp", f"{i}.{file_type}")
                 flag = 1
                 if line.rstrip():
                     a += f"{line}"
@@ -43,8 +45,8 @@ class Functions:
                         print(f"error:{file_name} is empty.")
                         shutil.rmtree("~tmp")
                         sys.exit()
-                    with open(f"~tmp/{i}.{file_type}", "w") as _f:
-                        _f.write(a)
+                    with open(file_path, "w") as f:
+                        f.write(a)
                     i += 1
                     a = ""
             if not flag:
@@ -53,8 +55,9 @@ class Functions:
                 sys.exit()
 
         if a:
-            with open(f"~tmp/{i}.{file_type}", "w") as _f:
-                _f.write(a)
+            file_path = os.path.join("~tmp", f"{i}.{file_type}")
+            with open(file_path, "w") as f:
+                f.write(a)
         return i
 
     def _output(self, num: int, opt_file: str) -> None:
@@ -62,18 +65,42 @@ class Functions:
         Merge and output the split files.
 
         Args:
-        num -- The number of files to merge.
-        opt_file -- Output file name.
+            num -- The number of files to merge.
+
+            opt_file -- Output file name.
         '''
         a = ""
         for file_num in range(1, num+1):
             a += f"#{file_num}:\n"
-            with open(f"~tmp/{file_num}.out", "r") as _f:
-                for line in _f:
+            out_file = os.path.join("~tmp", f"{file_num}.out")
+            with open(out_file, "r") as f:
+                for line in f:
                     a += f"{line}"
 
-        with open(opt_file, "w") as _out:
-            _out.write(a)
+        with open(opt_file, "w") as out:
+            out.write(a)
+
+    def delete_freopen(self, path: str) -> None:
+        '''
+        Delete freopen command.
+
+        Args:
+            path -- The cpp file path.
+        '''
+        if not os.path.exists(path):
+            raise ValueError("File not exists.")
+
+        with open(path, "r") as file:
+            content = file.read()
+
+        back_file_path = os.path.join(os.path.dirname(path), os.path.basename(path) + ".bak")
+        shutil.copy2(path, back_file_path)
+
+        re_match = r'freopen(\s)*\((\s)*"(\w)*\.{0,1}(\w)*"(\s)*,(\s)*"\w"(\s)*,(\s)*std\w{2,3}(\s)*\)(\s)*[,|;]'
+        changed_content = re.sub(re_match, "", content)
+
+        with open(path, "w") as file:
+            file.write(changed_content)
 
 
 class BetterRunner:
@@ -94,6 +121,7 @@ class BetterRunner:
         pa.add_argument("-of", "--outputfile", default="out.txt", help="Output file name.")
         pa.add_argument("-af", "--answerfile", default="ans.txt", help="Answer file name.")
         pa.add_argument("-g", "--gdb", action="store_true", help="Whether to debug via gdb when the answer is incorrect.")
+        pa.add_argument("-f", "--freopen", action="store_true", help="Add or delete freopen command.")
         pa.add_argument("-d", "--directgdb", action="store_true", help="Directly using gdb for debugging.")
         pa.add_argument("--onlyinput", action="store_true", help="Using file input (invalid for - j).")
         pa.add_argument("--onlyoutput", action="store_true", help="Using file output (invalid when - j).")
@@ -111,7 +139,7 @@ class BetterRunner:
         Compile files and generate executable files.
 
         Raise：
-        SystemExit -- Compilation failed.
+            SystemExit -- Compilation failed.
         '''
         try:
             compile = sp.Popen(["g++", self.args.filename + ".cpp", "-g", "-o", self.args.name])
@@ -133,18 +161,20 @@ class BetterRunner:
         Local evaluation and get results.
 
         Args：
-        opt_file -- Output file name.
+            opt_file -- Output file name.
 
-        ipt_file -- Input file name.
+            ipt_file -- Input file name.
 
-        ans_file -- Answer file name.
+            ans_file -- Answer file name.
 
-        file_num -- File number.
-        run_file -- Executable file name (None means use the value of the command line parameter).
-        if_print -- Whether to output (None means use the value of the command line parameter).
+            file_num -- File number.
+
+            run_file -- Executable file name (None means use the value of the command line parameter).
+
+            if_print -- Whether to output (None means use the value of the command line parameter).
 
         Return：
-        if_pass -- Whether to pass the test.
+            if_pass -- Whether to pass the test.
         '''
 
         print(f"#{file_num}:")
@@ -204,6 +234,9 @@ class BetterRunner:
                 gdb.wait()
                 sys.exit()
 
+            if not self.args.judge and self.args.freopen:
+                self.func.delete_freopen(self.args.filename + ".cpp")
+
             if self.args.judge:
                 flag = 0
 
@@ -213,14 +246,19 @@ class BetterRunner:
                 i = self.func._modify_file(self.answer_file, "ans")
 
                 for file_num in range(1, i + 1):
-                    judge = self._check(f"~tmp/{file_num}.out", f"~tmp/{file_num}.in", f"~tmp/{file_num}.ans",
-                                        file_num)
+                    out_file = os.path.join("~tmp", f"{file_num}.out")
+                    in_file = os.path.join("~tmp", f"{file_num}.in")
+                    ans_file = os.path.join("~tmp", f"{file_num}.ans")
+                    judge = self._check(out_file, in_file, ans_file, file_num)
                     if not judge:
                         flag += 1
 
                 print(f"#final:Accuracy{((i - flag) / i): .2%}")
                 self.func._output(i, self.output_file)
                 shutil.rmtree("~tmp")
+
+                if flag == 0 and self.args.freopen:
+                    self.func.delete_freopen(self.args.filename + ".cpp")
 
                 if self.args.gdb and flag > 0:
                     gdb = sp.Popen(["gdb", self.args.name])

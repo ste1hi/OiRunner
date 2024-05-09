@@ -2,19 +2,9 @@
 import unittest
 import os
 import sys
-import shutil
 from unittest import mock
 from OiRunner import BetterRunner
-
-PY_FILE_PATH = "../../OiRunner/BetterRunner.py"
-FILEOUT = "#1:\nfile1\n#2:\nfile2\n#3:\nfile3\n"
-GARBAGE = ["a.out", "a.exe", "~temp", "~err_temp", "~out"]
-
-
-def clean(filelist):
-    for filename in filelist:
-        if os.path.exists(filename):
-            os.remove(filename)
+from .util import GARBAGE, clean
 
 
 class TestRunner(unittest.TestCase):
@@ -22,7 +12,7 @@ class TestRunner(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         if os.getcwd().split(os.sep)[-1] != "data":
-            os.chdir("tests/data")
+            os.chdir(os.path.join("tests", "data"))
 
     def setUp(self):
         self.runner = BetterRunner.BetterRunner()
@@ -151,160 +141,79 @@ class TestParser(unittest.TestCase):
         self.assertTrue(self.runner.args.onlyoutput)
 
 
-class TestFunction(unittest.TestCase):
-
-    def setUp(self):
-        self.func = BetterRunner.Functions()
-        if os.getcwd().split(os.sep)[-1] != "data":
-            os.chdir("tests/data")
-
-    def tearDown(self):
-        clean(GARBAGE)
-
-    def test_modify_file(self):
-        for i in range(1, 3):
-            out = sys.stdout
-            with self.assertRaises(SystemExit):
-                with open("~temp", "w") as f:
-                    sys.stdout = f
-                    self.func._modify_file(f"empty{i}.in", "in")
-            self.assertFalse(os.path.exists("~tmp"))
-            with open("~temp", "r") as f:
-                self.assertEqual(f.read(), f"error:empty{i}.in is empty.\n")
-            sys.stdout = out
-
-        ret_code = self.func._modify_file("a.in", "in")
-        self.assertEqual(ret_code, 3)
-        self.assertTrue(os.path.exists("~tmp"))
-        for i in range(1, 4):
-            self.assertTrue(os.path.exists(f"~tmp{os.sep}{i}.in"))
-        for i in range(1, 4):
-            with open(f"~tmp{os.sep}{i}.in", "r") as f:
-                self.assertEqual(f.read(), f"file{i}\n")
-
-    def test_output(self):
-        for i in range(1, 4):
-            os.rename(f"~tmp{os.sep}{i}.in", f"~tmp{os.sep}{i}.out")
-        self.func._output(3, "~out")
-
-        with open("~out", "r") as f:
-            self.assertEqual(f.read(), FILEOUT)
-
-        shutil.rmtree("~tmp")
-
-
 class TestCheck(unittest.TestCase):
 
     def setUp(self):
         self.runner = BetterRunner.BetterRunner()
         if os.getcwd().split(os.sep)[-1] != "data":
-            os.chdir("tests/data")
+            os.chdir(os.path.join("tests", "data"))
 
     def tearDown(self):
         clean(GARBAGE)
 
-    def test_pass(self):
+    def run_check(self, filename, if_print=False, if_pass=True):
         out = sys.stdout
+        in_file = os.path.join("check_data", f"{filename}.in")
+        out_file = os.path.join("check_data", f"{filename}.out")
+        ans_file = os.path.join("check_data", f"{filename}.ans")
         with open("~temp", "w") as f:
             sys.stdout = f
             sys.argv = ["BetterRunner.py", "test"]
             self.runner.cmd_parse()
             self.runner.args.if_print = False
             if sys.platform == "win32":
-                self.runner.args.name = "../../tests/data/check.exe"
+                self.runner.args.name = os.path.join("..", "..", "tests", "data", "check.exe")
             else:
-                self.runner.args.name = "../../tests/data/check.out"
+                self.runner.args.name = os.path.join("..", "..", "tests", "data", "check.out")
 
-            if_pass = self.runner._check("check_data/1.out", "check_data/1.in",
-                                         "check_data/1.ans", 1)
-            self.assertTrue(if_pass)
+            if not if_print:
+                passed = self.runner._check(out_file, in_file, ans_file, 1)
+            else:
+                passed = self.runner._check(out_file, in_file, ans_file, 1, if_print=if_print)
+
+            if if_pass:
+                self.assertTrue(passed)
+            else:
+                self.assertFalse(passed)
 
         sys.stdout = out
+
+    def test_pass(self):
+        self.run_check("1")
 
         with open("~temp", "r") as f:
             self.assertEqual(f.read(), "#1:\nCorrect answer.\n")
 
         os.remove("~temp")
 
-        with open("~temp", "w") as f:
-            sys.stdout = f
-            self.runner.args.if_print = True
-            self.runner._check("check_data/1.out", "check_data/1.in", "check_data/1.ans", 1, if_print=True)
-
-        sys.stdout = out
+        self.run_check("1", True)
 
         with open("~temp", "r") as f:
             # We don't know the exact running time.
             self.assertIn("Correct answer, takes", f.read())
 
     def test_retval(self):
-        out = sys.stdout
-        with open("~temp", "w") as f:
-            sys.stdout = f
-            sys.argv = ["BetterRunner.py", "test"]
-            self.runner.cmd_parse()
-            if sys.platform == "win32":
-                self.runner.args.name = "../../tests/data/check.exe"
-            else:
-                self.runner.args.name = "../../tests/data/check.out"
+        self.run_check("3", if_pass=False)
 
-            self.runner._check("check_data/3.out", "check_data/3.in", "check_data/3.ans", 1)
-
-        sys.stdout = out
         with open("~temp", "r") as f:
             self.assertIn("#1:\nThe return value is 1. There may be issues with the program running.\n", f.read())
 
     def test_fail(self):
-        out = sys.stdout
-        with open("~temp", "w") as f:
-            sys.stdout = f
-            sys.argv = ["BetterRunner.py", "test"]
-            self.runner.cmd_parse()
-            self.runner.args.if_print = False
-            if sys.platform == "win32":
-                self.runner.args.name = "../../tests/data/check.exe"
-            else:
-                self.runner.args.name = "../../tests/data/check.out"
-
-            if_pass = self.runner._check("check_data/2.out", "check_data/2.in",
-                                         "check_data/2.ans", 1)
-            self.assertFalse(if_pass)
-
-        sys.stdout = out
+        self.run_check("2", if_pass=False)
 
         with open("~temp", "r") as f:
             self.assertEqual(f.read(), "#1:\nWrong answer.\n")
 
         os.remove("~temp")
 
-        with open("~temp", "w") as f:
-            sys.stdout = f
-            self.runner.args.if_print = True
-            self.runner._check("check_data/2.out", "check_data/2.in", "check_data/2.ans", 1, if_print=True)
-
-        sys.stdout = out
+        self.run_check("2", True, False)
 
         with open("~temp", "r") as f:
             self.assertEqual("#1:\nStandard answer:['wrong_answer']\nYour answer:['2']\n"
                              "Wrong answer.\nError data:\n2\n\n", f.read())
 
     def test_large(self):
-        out = sys.stdout
-        with open("~temp", "w") as f:
-            sys.stdout = f
-            sys.argv = ["BetterRunner.py", "test"]
-            self.runner.cmd_parse()
-            self.runner.args.if_print = True
-            if sys.platform == "win32":
-                self.runner.args.name = "../../tests/data/check.exe"
-            else:
-                self.runner.args.name = "../../tests/data/check.out"
-
-            if_pass = self.runner._check("check_data/large.out", "check_data/large.in",
-                                         "check_data/large.ans", 1, if_print=True)
-            self.assertFalse(if_pass)
-
-        sys.stdout = out
+        self.run_check("large", True, False)
 
         with open("~temp", "r") as f:
             output = f.read()
@@ -317,7 +226,7 @@ class Testrun(unittest.TestCase):
     def setUp(self):
         self.runner = BetterRunner.BetterRunner()
         if os.getcwd().split(os.sep)[-1] != "data":
-            os.chdir("tests/data")
+            os.chdir(os.path.join("tests", "data"))
 
     def tearDown(self):
         clean(GARBAGE)
@@ -340,7 +249,7 @@ class Testrun(unittest.TestCase):
         sys.argv = ["BetterRunner.py", "test"]
         self.runner.cmd_parse()
         self.runner.args.onlyinput = True
-        self.runner.input_file = "../../tests/data/check_data/1.out"
+        self.runner.input_file = os.path.join("..", "..", "tests", "data", "check_data", "1.out")
 
         def wait():
             print("1")
@@ -359,7 +268,7 @@ class Testrun(unittest.TestCase):
 
         self.runner.args.onlyinput = False
         self.runner.args.onlyoutput = True
-        self.runner.output_file = "../../tests/data/check_data/1.out"
+        self.runner.output_file = os.path.join("..", "..", "tests", "data", "check_data", "1.out")
 
         os.remove("~temp")
 
@@ -442,13 +351,37 @@ class Testrun(unittest.TestCase):
                     mock_sp.assert_called_once_with(["gdb", "test"])
         sys.stdout = out
 
+    @mock.patch("OiRunner.BetterRunner.Functions.delete_freopen")
+    @mock.patch("subprocess.Popen")
+    def test_call_delete_freopen(self, mock_sp, mock_delete_freopen):
+        sys.argv = ["BetterRunner.py", "test"]
+        self.runner.cmd_parse()
+        self.runner.args.judge = False
+        self.runner.args.freopen = True
+
+        out = sys.stdout
+        sys.stdout = None
+        self.runner.run()
+
+        def mock_new_dir(a, b):
+            os.mkdir("~tmp")
+
+        self.runner.args.judge = True
+        with mock.patch("OiRunner.BetterRunner.Functions._modify_file", return_value=3):
+            with mock.patch("OiRunner.BetterRunner.Functions._output", side_effect=mock_new_dir):
+                with mock.patch("OiRunner.BetterRunner.BetterRunner._check", return_value=True):
+                    self.runner.run()
+        self.assertEqual(mock_delete_freopen.call_count, 2)
+        mock_delete_freopen.assert_called_with("test.cpp")
+        sys.stdout = out
+
 
 class TestMisc(unittest.TestCase):
 
     @mock.patch("OiRunner.BetterRunner.BetterRunner.cmd_parse")
     @mock.patch("OiRunner.BetterRunner.BetterRunner.compile")
     @mock.patch("OiRunner.BetterRunner.BetterRunner.run")
-    def test_main_call(self, mock_parse, mock_compile, mock_run):
+    def test_main_call(self, mock_run, mock_compile, mock_parse):
         BetterRunner.main()
         mock_compile.assert_called_once()
         mock_parse.assert_called_once()
