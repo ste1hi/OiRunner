@@ -7,7 +7,7 @@ name = "OiRunner"
 authors = [{name = "ste1", email = "1874076121@qq.com"}]
 description = "This package is designed to help oier compile the cpp file conveniently."
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.6"
 license = {file = "LICENSE"}
 dynamic = ["version"]
 classifiers = [
@@ -16,6 +16,9 @@ classifiers = [
         "Operating System :: POSIX :: Linux",
         "Operating System :: Microsoft :: Windows",
 ]
+
+[project.scripts]
+oirun = "OiRunner.BetterRunner:main"
 
 [tool.setuptools.dynamic]
 version = {attr = "OiRunner.__version__"}

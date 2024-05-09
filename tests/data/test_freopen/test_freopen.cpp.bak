@@ -1,0 +1,13 @@
+#include <iostream>
+
+using namespace std;
+
+int main(){
+    freopen 
+        ("in", "r"  , stdin),
+    freopen("out" , "w", stdout);
+    
+    int a = 1;
+    cin >> a;
+    cout << a;
+}
