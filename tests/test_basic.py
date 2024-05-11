@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-import unittest
 import os
 import sys
+import unittest
 from unittest import mock
+
 from OiRunner import BetterRunner
 from .util import GARBAGE, clean
 

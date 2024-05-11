@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-import subprocess as sp
 import argparse
-import sys
+import json
 import os
 import re
 import shutil
+import sys
+import subprocess as sp
 import time
 from typing import Optional
 
@@ -105,9 +106,17 @@ class Functions:
 
 class BetterRunner:
     def __init__(self) -> None:
-        self.input_file = "in.txt"
-        self.output_file = "out.txt"
-        self.answer_file = "ans.txt"
+        if os.path.exists(".OiRunner"):
+            settings_path = os.path.join(".OiRunner", "settings.json")
+            with open(settings_path, "r") as f:
+                settings = json.load(f)
+            self.input_file = settings["input_file"]
+            self.output_file = settings["output_file"]
+            self.answer_file = settings["answer_file"]
+        else:
+            self.input_file = "in.txt"
+            self.output_file = "out.txt"
+            self.answer_file = "ans.txt"
         self.func = Functions()
 
     def cmd_parse(self) -> None:

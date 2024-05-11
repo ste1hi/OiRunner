@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-import unittest
 import os
 import sys
 import shutil
+import unittest
 from OiRunner import BetterRunner
+
 from .util import GARBAGE, FILEOUT, FREOPEN, clean
 
 
