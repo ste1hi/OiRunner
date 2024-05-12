@@ -10,6 +10,8 @@ from .Exceptions import ProjectAlreadyExists
 class OiRunner():
 
     def cmd_parse(self) -> None:
+        '''Parse the command'''
+
         pa = argparse.ArgumentParser()
         sub_pa = pa.add_subparsers(dest="command")
 
@@ -25,6 +27,21 @@ class OiRunner():
             pa.error('The subcommand is required.')
 
     def make(self, name: str, follow_project: bool, if_create_cpp_file: bool) -> None:
+        '''
+        Make a project in current directory.
+        The `.OiRunner` directory will be created. In this directory, a `settings.json` file will be created.
+
+        Args:
+            name -- Project name.
+
+            follow_project -- Whether testing file's name is the same as project name.
+
+            if_create_cpp_file -- Whether create cpp file.
+
+        Raise:
+            ProjectAlreadyExists -- Project already exists.
+        '''
+
         if os.path.exists(".OiRunner"):
             raise ProjectAlreadyExists
 
@@ -68,6 +85,6 @@ class OiRunner():
             sys.exit()
 
 
-def main():
+def main():  # pragma: no cover
     oirunner = OiRunner()
     oirunner.run()
