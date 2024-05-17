@@ -8,6 +8,8 @@ import shutil
 import time
 from typing import Optional
 
+from .submit import Submit
+
 
 class Functions:
 
@@ -28,6 +30,8 @@ class Functions:
 
         Raise:
             SystemExit -- The file is empty.
+
+            Exitcode `11` means some file is empty.
         '''
         i = 1
         a = ""
@@ -44,7 +48,7 @@ class Functions:
                     if not a:
                         print(f"error:{file_name} is empty.")
                         shutil.rmtree("~tmp")
-                        sys.exit()
+                        sys.exit(11)
                     with open(file_path, "w") as f:
                         f.write(a)
                     i += 1
@@ -52,7 +56,7 @@ class Functions:
             if not flag:
                 print(f"error:{file_name} is empty.")
                 shutil.rmtree("~tmp")
-                sys.exit()
+                sys.exit(11)
 
         if a:
             file_path = os.path.join("~tmp", f"{i}.{file_type}")
@@ -116,13 +120,17 @@ class BetterRunner:
         pa.add_argument("filename", help="CPP file to be compiled (omitting '. cpp').")
         pa.add_argument("-n", "--name", default="a", help="Generate executable file name (omit '. exe').")
         pa.add_argument("-j", "--judge", action="store_true", help="Whether to evaluate.")
-        pa.add_argument("-p", "--print", action="store_true", help="Whether to print.")
+        pa.add_argument("-p", "--print", action="store_true", help="Whether to print details.")
         pa.add_argument("-if", "--inputfile", default="in.txt", help="Input file name.")
         pa.add_argument("-of", "--outputfile", default="out.txt", help="Output file name.")
         pa.add_argument("-af", "--answerfile", default="ans.txt", help="Answer file name.")
         pa.add_argument("-g", "--gdb", action="store_true", help="Whether to debug via gdb when the answer is incorrect.")
         pa.add_argument("-f", "--freopen", action="store_true", help="Add or delete freopen command.")
         pa.add_argument("-d", "--directgdb", action="store_true", help="Directly using gdb for debugging.")
+        pa.add_argument("-r", "--remote", type=str, default=None, help="The question id in luogu.")
+        pa.add_argument("-dO2", "--disabledO2", action="store_true", help="Disabled `O2` flag during remote judging.")
+        pa.add_argument("-l", "--language", type=int, default=11,
+                        help="The ID of the programming language used during remote judging.")
         pa.add_argument("--onlyinput", action="store_true", help="Using file input (invalid for - j).")
         pa.add_argument("--onlyoutput", action="store_true", help="Using file output (invalid when - j).")
         self.args = pa.parse_args()
@@ -134,12 +142,17 @@ class BetterRunner:
         elif sys.platform == "win32":
             self.args.name = self.args.name + ".exe"
 
+        if self.args.remote is not None:
+            self.submit = Submit()
+
     def compile(self) -> None:
         '''
         Compile files and generate executable files.
 
-        Raise：
+        Raise:
             SystemExit -- Compilation failed.
+
+            Exitcode `1` means compilation failed.
         '''
         try:
             compile = sp.Popen(["g++", self.args.filename + ".cpp", "-g", "-o", self.args.name])
@@ -148,7 +161,7 @@ class BetterRunner:
                 print("Compilation successful.")
             else:
                 print("Compilation failed.")
-                sys.exit()
+                sys.exit(1)
 
         # Can't sent Ctrl+c and get the messages.
         except KeyboardInterrupt:  # pragma: no cover
@@ -160,7 +173,7 @@ class BetterRunner:
         '''
         Local evaluation and get results.
 
-        Args：
+        Args:
             opt_file -- Output file name.
 
             ipt_file -- Input file name.
@@ -173,7 +186,7 @@ class BetterRunner:
 
             if_print -- Whether to output (None means use the value of the command line parameter).
 
-        Return：
+        Return:
             if_pass -- Whether to pass the test.
         '''
 
@@ -260,6 +273,12 @@ class BetterRunner:
                 if flag == 0 and self.args.freopen:
                     self.func.delete_freopen(self.args.filename + ".cpp")
 
+                if flag == 0 and self.args.remote is not None:
+                    enableO2 = not self.args.disabledO2
+                    rid = self.submit.upload_answer(self.args.remote, self.args.filename + ".cpp",
+                                                    enableO2, self.args.language)
+                    self.submit.get_record(rid, if_show_details=self.args.print)
+
                 if self.args.gdb and flag > 0:
                     gdb = sp.Popen(["gdb", self.args.name])
                     gdb.wait()
@@ -280,6 +299,12 @@ class BetterRunner:
                 run.wait()
                 if run.returncode != 0:
                     print(f"The return value is {run.returncode}. There may be issues with the program running.")
+
+                if self.args.remote is not None:
+                    enableO2 = not self.args.disabledO2
+                    rid = self.submit.upload_answer(self.args.remote, self.args.filename + ".cpp",
+                                                    enableO2, self.args.language)
+                    self.submit.get_record(rid, if_show_details=self.args.print)
 
         # Can't sent Ctrl+c and get the messages.
         except KeyboardInterrupt:  # pragma: no cover
