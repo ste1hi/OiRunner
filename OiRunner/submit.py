@@ -25,7 +25,7 @@ class Submit:
         uid = os.getenv("_uid")
 
         if client_id is None or uid is None:
-            print("Missing the required environment variable.(__client_id' or '_uid')")
+            print("Missing the required environment variable.('__client_id' or '_uid')")
             sys.exit(12)
 
         self.__cookies = {
@@ -145,6 +145,7 @@ class Submit:
         '''
         record_url = RECORD_URL + rid
         self.headers.pop("referer", None)
+        self.headers.pop("content-type", None)
 
         counter = 0
         while True:
@@ -155,7 +156,7 @@ class Submit:
 
             record = self.session.get(url=record_url, params=PARAMS)
             data = record.json()["currentData"]
-            judge_result: Dict[str, dict] = data["record"]["detail"]["judgeResult"]
+            judge_result: Union(Dict[str, dict], list) = data["record"]["detail"]["judgeResult"]
             test_case_groups: dict = data["testCaseGroup"]
             case_counter = 0
 
@@ -167,16 +168,23 @@ class Submit:
 
         print("summary:")
         total_score = 0
-        for subtask in judge_result["subtasks"].values():
+        if type(judge_result["subtasks"]) == list:
+            subtasks = judge_result["subtasks"]
+        else:
+            subtasks = judge_result["subtasks"].values()
+        for subtask in subtasks:
             total_score += subtask["score"]
         print(total_score)
 
         if if_show_details:
             print("\ndetails:")
-            for subtask in judge_result["subtasks"].values():
+            for subtask in subtasks:
                 testcases = subtask["testCases"]
                 subtask_id = subtask["id"]
-                subtask_cases_id = test_case_groups[str(subtask_id)]
+                if type(test_case_groups) == list:
+                    subtask_cases_id = test_case_groups[subtask_id]
+                else:
+                    subtask_cases_id = test_case_groups[str(subtask_id)]
 
                 if id == 1:  # If the id of subtask is 1, the testcases in this subtask are in a list.
                     for i in range(len(subtask_cases_id)):
@@ -189,4 +197,4 @@ class Submit:
                         score = testcases[str(i)]["score"]
                         description = testcases[str(i)]["description"]
                         status = testcases[str(i)]["status"]
-                        print(f"Case:{i+1}\nscore:{score}\nstatus:{STATUS_CODE[status]}\ndescription:{description}")
+                        print(f"Case:{i+1}\nscore:{score}\nstatus:{STATUS_CODE[status]}\ndescription:{description}\n")

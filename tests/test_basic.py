@@ -3,6 +3,7 @@ import unittest
 import os
 import sys
 from unittest import mock
+
 from OiRunner import BetterRunner
 from .util import GARBAGE, clean
 
@@ -374,6 +375,35 @@ class Testrun(unittest.TestCase):
         self.assertEqual(mock_delete_freopen.call_count, 2)
         mock_delete_freopen.assert_called_with("test.cpp")
         sys.stdout = out
+
+    @mock.patch("OiRunner.submit.Submit.upload_answer", return_value="test")
+    @mock.patch("OiRunner.submit.Submit.get_record")
+    @mock.patch("OiRunner.submit.Submit._get_csrf_token")
+    @mock.patch("subprocess.Popen")
+    def test_remote_judge(self, _, _get_token, get_record, upload):
+        sys.argv = ["BetterRunner.py", "test"]
+        self.runner.cmd_parse()
+        self.runner.args.remote = "test"
+        self.runner.args.judge = False
+        
+        out = sys.stdout
+        sys.stdout = None
+        self.runner.run()
+
+        def mock_new_dir(a, b):
+            os.mkdir("~tmp")
+
+        self.runner.args.judge = True
+        with mock.patch("OiRunner.BetterRunner.Functions._modify_file", return_value=3):
+            with mock.patch("OiRunner.BetterRunner.Functions._output", side_effect=mock_new_dir):
+                with mock.patch("OiRunner.BetterRunner.BetterRunner._check", return_value=True):
+                    self.runner.run()
+        sys.stdout = out
+
+        self.assertEqual(upload.call_count, 2)
+        self.assertEqual(get_record.call_count, 2)
+        upload.assert_called_with("test", "test.cpp", True, 11)
+        get_record.assert_called_with("test", if_show_details=False)
 
 
 class TestMisc(unittest.TestCase):

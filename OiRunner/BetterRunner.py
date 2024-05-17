@@ -142,9 +142,6 @@ class BetterRunner:
         elif sys.platform == "win32":
             self.args.name = self.args.name + ".exe"
 
-        if self.args.remote is not None:
-            self.submit = Submit()
-
     def compile(self) -> None:
         '''
         Compile files and generate executable files.
@@ -274,6 +271,7 @@ class BetterRunner:
                     self.func.delete_freopen(self.args.filename + ".cpp")
 
                 if flag == 0 and self.args.remote is not None:
+                    self.submit = Submit()
                     enableO2 = not self.args.disabledO2
                     rid = self.submit.upload_answer(self.args.remote, self.args.filename + ".cpp",
                                                     enableO2, self.args.language)
@@ -301,6 +299,7 @@ class BetterRunner:
                     print(f"The return value is {run.returncode}. There may be issues with the program running.")
 
                 if self.args.remote is not None:
+                    self.submit = Submit()
                     enableO2 = not self.args.disabledO2
                     rid = self.submit.upload_answer(self.args.remote, self.args.filename + ".cpp",
                                                     enableO2, self.args.language)
