@@ -376,6 +376,7 @@ class Testrun(unittest.TestCase):
         mock_delete_freopen.assert_called_with("test.cpp")
         sys.stdout = out
 
+    @mock.patch.dict(os.environ, {"__client_id": "test_client_id", "_uid": "test_uid"})
     @mock.patch("OiRunner.submit.Submit.upload_answer", return_value="test")
     @mock.patch("OiRunner.submit.Submit.get_record")
     @mock.patch("OiRunner.submit.Submit._get_csrf_token")
@@ -385,7 +386,7 @@ class Testrun(unittest.TestCase):
         self.runner.cmd_parse()
         self.runner.args.remote = "test"
         self.runner.args.judge = False
-        
+
         out = sys.stdout
         sys.stdout = None
         self.runner.run()

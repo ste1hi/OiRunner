@@ -28,13 +28,13 @@ class Submit:
             print("Missing the required environment variable.('__client_id' or '_uid')")
             sys.exit(12)
 
-        self.__cookies = {
+        self._cookies = {
             '__client_id': client_id,
             '_uid': uid
             }
         self.session = requests.Session()
         self.headers: MutableMapping[str, Union[str, bytes]] = {"User-Agent": USER_AGENT}
-        self.__csrf_token = self._get_csrf_token()
+        self._csrf_token = self._get_csrf_token()
         self.headers["Accept"] = ACCEPT
         self.headers["content-type"] = CONTENT_TYPE
 
@@ -53,7 +53,7 @@ class Submit:
 
         '''
         self.session.headers = self.headers
-        self.session.cookies.update(self.__cookies)
+        self.session.cookies.update(self._cookies)
         html_content = self.session.get(BAD_URL).text
 
         # Get csrf-token meta tag in html file.
@@ -76,7 +76,8 @@ class Submit:
         # Get the value of content attribute.
         content_value_pat = re.compile(CONTENT_VALUE_PAT)
         content_value_result = re.search(content_value_pat, content)
-        if content_value_result is None:
+        # It must include a quote mark.
+        if content_value_result is None:  # pragma: no cover
             print("The server returned anomalous data (which does not contain anything in the content attribute of meta tag).")
             sys.exit(23)
         content_value = content_value_result.group()
@@ -108,7 +109,7 @@ class Submit:
             Exitcode `24` means an error occurred while uploading the answer.
         '''
         question_url = QUESTION_URL + question
-        self.headers["x-csrf-token"] = self.__csrf_token
+        self.headers["x-csrf-token"] = self._csrf_token
         self.headers["referer"] = question_url
         url = SUBMIT_URL + question
 
@@ -156,7 +157,7 @@ class Submit:
 
             record = self.session.get(url=record_url, params=PARAMS)
             data = record.json()["currentData"]
-            judge_result: Union(Dict[str, dict], list) = data["record"]["detail"]["judgeResult"]
+            judge_result: Dict[str, dict] = data["record"]["detail"]["judgeResult"]
             test_case_groups: dict = data["testCaseGroup"]
             case_counter = 0
 
@@ -168,10 +169,10 @@ class Submit:
 
         print("summary:")
         total_score = 0
-        if type(judge_result["subtasks"]) == list:
-            subtasks = judge_result["subtasks"]
+        if type(judge_result["subtasks"]) is list:
+            subtasks: Union[list, dict] = judge_result["subtasks"]
         else:
-            subtasks = judge_result["subtasks"].values()
+            subtasks = list(judge_result["subtasks"].values())
         for subtask in subtasks:
             total_score += subtask["score"]
         print(total_score)
@@ -181,7 +182,7 @@ class Submit:
             for subtask in subtasks:
                 testcases = subtask["testCases"]
                 subtask_id = subtask["id"]
-                if type(test_case_groups) == list:
+                if type(test_case_groups) is list:
                     subtask_cases_id = test_case_groups[subtask_id]
                 else:
                     subtask_cases_id = test_case_groups[str(subtask_id)]

@@ -165,4 +165,5 @@ cython_debug/
 token
 *.html
 .vscode
+local_*
 local_*/
