@@ -79,7 +79,7 @@ class Functions:
             out_file = os.path.join("~tmp", f"{file_num}.out")
             with open(out_file, "r") as f:
                 for line in f:
-                    a += f"{line}"
+                    a += f"{line}\n"
 
         with open(opt_file, "w") as out:
             out.write(a)
@@ -271,6 +271,7 @@ class BetterRunner:
                     self.func.delete_freopen(self.args.filename + ".cpp")
 
                 if flag == 0 and self.args.remote is not None:
+                    print("\nSubmitting to remote judge.")
                     self.submit = Submit()
                     enableO2 = not self.args.disabledO2
                     rid = self.submit.upload_answer(self.args.remote, self.args.filename + ".cpp",
@@ -299,6 +300,7 @@ class BetterRunner:
                     print(f"The return value is {run.returncode}. There may be issues with the program running.")
 
                 if self.args.remote is not None:
+                    print("\nSubmitting to remote judge.")
                     self.submit = Submit()
                     enableO2 = not self.args.disabledO2
                     rid = self.submit.upload_answer(self.args.remote, self.args.filename + ".cpp",

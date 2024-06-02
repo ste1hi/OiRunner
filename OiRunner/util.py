@@ -18,5 +18,7 @@ PARAMS = {'_contentOnly': '1'}
 
 STATUS_CODE = {
     12: "AC",
-    5: "TLE"
+    5: "TLE",
+    7: "RE",
+    6: "WA"
     }

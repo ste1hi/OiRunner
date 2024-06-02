@@ -167,7 +167,6 @@ class Submit:
             if case_counter == judge_result["finishedCaseCount"]:
                 break
 
-        print("summary:")
         total_score = 0
         if type(judge_result["subtasks"]) is list:
             subtasks: Union[list, dict] = judge_result["subtasks"]
@@ -175,27 +174,37 @@ class Submit:
             subtasks = list(judge_result["subtasks"].values())
         for subtask in subtasks:
             total_score += subtask["score"]
-        print(total_score)
 
         if if_show_details:
             print("\ndetails:")
-            for subtask in subtasks:
-                testcases = subtask["testCases"]
-                subtask_id = subtask["id"]
-                if type(test_case_groups) is list:
-                    subtask_cases_id = test_case_groups[subtask_id]
-                else:
-                    subtask_cases_id = test_case_groups[str(subtask_id)]
+        summary = ""
+        for subtask in subtasks:
+            testcases = subtask["testCases"]
+            subtask_id = subtask["id"]
+            if type(test_case_groups) is list:
+                subtask_cases_id = test_case_groups[subtask_id]
+            else:
+                subtask_cases_id = test_case_groups[str(subtask_id)]
 
-                if id == 1:  # If the id of subtask is 1, the testcases in this subtask are in a list.
-                    for i in range(len(subtask_cases_id)):
-                        score = testcases[i]["score"]
-                        description = testcases[i]["description"]
-                        status = testcases[i]["status"]
+            if id == 1:  # If the id of subtask is 1, the testcases in this subtask are in a list.
+                for i in range(len(subtask_cases_id)):
+                    score = testcases[i]["score"]
+                    description = testcases[i]["description"]
+                    status = testcases[i]["status"]
+                    if if_show_details:
                         print(f"Case:{i+1}\nscore:{score}\nstatus:{STATUS_CODE[status]}\ndescription:{description}")
-                else:
-                    for i in subtask_cases_id:
-                        score = testcases[str(i)]["score"]
-                        description = testcases[str(i)]["description"]
-                        status = testcases[str(i)]["status"]
+                    else:
+                        summary += f"{STATUS_CODE[status]}|"
+            else:
+                for i in subtask_cases_id:
+                    score = testcases[str(i)]["score"]
+                    description = testcases[str(i)]["description"]
+                    status = testcases[str(i)]["status"]
+                    if if_show_details:
                         print(f"Case:{i+1}\nscore:{score}\nstatus:{STATUS_CODE[status]}\ndescription:{description}\n")
+                    else:
+                        summary += f"{STATUS_CODE[status]}|"
+        summary = summary[:-1]
+        print("summary:")
+        print(total_score)
+        print(summary)
