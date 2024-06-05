@@ -130,7 +130,7 @@ class Submit:
             print(f"An error occurred while uploading the answer, with the server returning: \n {response.text}")
             sys.exit(24)
 
-    def get_record(self, rid: str, retry_interval: int = 1,
+    def get_record(self, rid: str, retry_interval: float = 1,
                    retry_count: int = -1, if_show_details: bool = False) -> None:
         '''
         Get the judge result from the `rid`.
@@ -186,13 +186,13 @@ class Submit:
             else:
                 subtask_cases_id = test_case_groups[str(subtask_id)]
 
-            if id == 1:  # If the id of subtask is 1, the testcases in this subtask are in a list.
+            if subtask_id == 1:  # If the id of subtask is 1, the testcases in this subtask are in a list.
                 for i in range(len(subtask_cases_id)):
                     score = testcases[i]["score"]
                     description = testcases[i]["description"]
                     status = testcases[i]["status"]
                     if if_show_details:
-                        print(f"Case:{i+1}\nscore:{score}\nstatus:{STATUS_CODE[status]}\ndescription:{description}")
+                        print(f"Case:{i+1}\nscore:{score}\nstatus:{STATUS_CODE[status]}\ndescription:{description}\n")
                     else:
                         summary += f"{STATUS_CODE[status]}|"
             else:
