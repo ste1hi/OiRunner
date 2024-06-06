@@ -68,6 +68,7 @@ class TestSubmit(unittest.TestCase):
                     self.assertEqual(output, wrong_output[times])
                     self.assertEqual(sys_exit.exception.code, wrong_code[times])
 
+    @unittest.mock.patch.dict(os.environ, {"__client_id": "test_client_id", "_uid": "test_uid"})
     @unittest.mock.patch('OiRunner.submit.Submit._get_csrf_token', return_value="test")
     @unittest.mock.patch('requests.Session.post')
     def test_upload(self, mock_post, _):
@@ -86,6 +87,7 @@ class TestSubmit(unittest.TestCase):
         submit.upload_answer("test", "success.cpp")
         mock_post.assert_called_with(url=url, json=test_data)
 
+    @unittest.mock.patch.dict(os.environ, {"__client_id": "test_client_id", "_uid": "test_uid"})
     @unittest.mock.patch('OiRunner.submit.Submit._get_csrf_token', return_value="test")
     @unittest.mock.patch('requests.Session.post')
     def test_upload_fail(self, mock_post, _):
@@ -99,6 +101,7 @@ class TestSubmit(unittest.TestCase):
 
         self.assertEqual(sys_exit.exception.code, 24)
 
+    @unittest.mock.patch.dict(os.environ, {"__client_id": "test_client_id", "_uid": "test_uid"})
     @unittest.mock.patch('OiRunner.submit.Submit._get_csrf_token', return_value="test")
     @unittest.mock.patch('requests.Session.get')
     def test_get_record_retry_count(self, mock_get, _):
@@ -107,6 +110,7 @@ class TestSubmit(unittest.TestCase):
         submit.get_record("test", 0.1, 2)
         self.assertEqual(mock_get.call_count, 2)
 
+    @unittest.mock.patch.dict(os.environ, {"__client_id": "test_client_id", "_uid": "test_uid"})
     @unittest.mock.patch('OiRunner.submit.Submit._get_csrf_token', return_value="test")
     @unittest.mock.patch('requests.Session.get')
     def test_get_record_without_subtasks(self, mock_get, _):
@@ -122,6 +126,7 @@ class TestSubmit(unittest.TestCase):
             output = buf.getvalue()
             self.assertEqual(output, DETAILS_OUTPUT)
 
+    @unittest.mock.patch.dict(os.environ, {"__client_id": "test_client_id", "_uid": "test_uid"})
     @unittest.mock.patch('OiRunner.submit.Submit._get_csrf_token', return_value="test")
     @unittest.mock.patch('requests.Session.get')
     def test_get_record_with_subtasks(self, mock_get, _):
