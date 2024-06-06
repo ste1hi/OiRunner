@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+from contextlib import redirect_stdout
+import io
+import unittest
 import os
 import sys
 import unittest
@@ -26,25 +29,17 @@ class TestRunner(unittest.TestCase):
         self.runner.args.filename = "success"
         self.runner.args.name = "a.out"
 
-        out = sys.stdout
-        with open("~temp", "w") as f:
-            sys.stdout = f
+        with io.StringIO() as buf, redirect_stdout(buf):
             self.runner.compile()
-        sys.stdout = out
-
-        with open("~temp", "r") as f:
-            self.assertEqual(f.read(), "Compilation successful.\n")
-        os.remove("~temp")
+            output = buf.getvalue()
+            self.assertEqual(output, "Compilation successful.\n")
 
     def test_fail_compile(self):
         self.runner.args.filename = "fail"
         self.runner.args.name = "a.out"
 
-        out = sys.stdout
         with self.assertRaises(SystemExit):
-            with open("~temp", "w") as f:
-                sys.stdout = f
-
+            with io.StringIO() as buf, redirect_stdout(buf):
                 def wait():
                     return -1
 
@@ -52,11 +47,8 @@ class TestRunner(unittest.TestCase):
                 new_mock.return_value = -1
                 with mock.patch("subprocess.Popen", return_value=new_mock):
                     self.runner.compile()
-
-        sys.stdout = out
-
-        with open("~temp", "r") as f:
-            self.assertEqual(f.read(), "Compilation failed.\n")
+                output = buf.getvalue()
+                self.assertEqual(output, "Compilation failed.\n")
 
     def test_init(self):
         self.assertEqual(self.runner.input_file, "in.txt")
@@ -165,12 +157,10 @@ class TestCheck(unittest.TestCase):
         clean(GARBAGE)
 
     def run_check(self, filename, if_print=False, if_pass=True):
-        out = sys.stdout
         in_file = os.path.join("check_data", f"{filename}.in")
         out_file = os.path.join("check_data", f"{filename}.out")
         ans_file = os.path.join("check_data", f"{filename}.ans")
-        with open("~temp", "w") as f:
-            sys.stdout = f
+        with io.StringIO() as buf, redirect_stdout(buf):
             sys.argv = ["BetterRunner.py", "test"]
             self.runner.cmd_parse()
             self.runner.args.if_print = False
@@ -188,50 +178,33 @@ class TestCheck(unittest.TestCase):
                 self.assertTrue(passed)
             else:
                 self.assertFalse(passed)
-
-        sys.stdout = out
+            output = buf.getvalue()
+            return output
 
     def test_pass(self):
-        self.run_check("1")
+        output = self.run_check("1")
+        self.assertEqual(output, "#1:\nCorrect answer.\n")
 
-        with open("~temp", "r") as f:
-            self.assertEqual(f.read(), "#1:\nCorrect answer.\n")
-
-        os.remove("~temp")
-
-        self.run_check("1", True)
-
-        with open("~temp", "r") as f:
-            # We don't know the exact running time.
-            self.assertIn("Correct answer, takes", f.read())
+        output = self.run_check("1", True)
+        self.assertIn("Correct answer, takes", output)  # We don't know the exact running time.
 
     def test_retval(self):
-        self.run_check("3", if_pass=False)
-
-        with open("~temp", "r") as f:
-            self.assertIn("#1:\nThe return value is 1. There may be issues with the program running.\n", f.read())
+        output = self.run_check("3", if_pass=False)
+        self.assertIn("#1:\nThe return value is 1. There may be issues with the program running.\n", output)
 
     def test_fail(self):
-        self.run_check("2", if_pass=False)
+        output = self.run_check("2", if_pass=False)
+        self.assertEqual(output, "#1:\nWrong answer.\n")
 
-        with open("~temp", "r") as f:
-            self.assertEqual(f.read(), "#1:\nWrong answer.\n")
-
-        os.remove("~temp")
-
-        self.run_check("2", True, False)
-
-        with open("~temp", "r") as f:
-            self.assertEqual("#1:\nStandard answer:['wrong_answer']\nYour answer:['2']\n"
-                             "Wrong answer.\nError data:\n2\n\n", f.read())
+        output = self.run_check("2", True, False)
+        self.assertEqual("#1:\nStandard answer:['wrong_answer']\nYour answer:['2']\n"
+                         "Wrong answer.\nError data:\n2\n\n", output)
 
     def test_large(self):
-        self.run_check("large", True, False)
+        output = self.run_check("large", True, False)
 
-        with open("~temp", "r") as f:
-            output = f.read()
-            self.assertIn("The number of answer lines is too large.", output)
-            self.assertIn("The number of data words is too large.", output)
+        self.assertIn("The number of answer lines is too large.", output)
+        self.assertIn("The number of data words is too large.", output)
 
 
 class Testrun(unittest.TestCase):
@@ -271,46 +244,33 @@ class Testrun(unittest.TestCase):
         new_mock = mock.Mock(wait=wait, returncode=0)
         new_mock.return_value = 0
         with mock.patch("subprocess.Popen", return_value=new_mock):
-            out = sys.stdout
-            with open("~temp", "w") as f:
-                sys.stdout = f
+            with io.StringIO() as buf, redirect_stdout(buf):
                 self.runner.run()
-        sys.stdout = out
-        with open("~temp", "r") as f:
-            self.assertEqual("The file has been executed.\n1\n", f.read())
+                output = buf.getvalue()
+                self.assertEqual("The file has been executed.\n1\n", output)
 
         self.runner.args.onlyinput = False
         self.runner.args.onlyoutput = True
         self.runner.output_file = os.path.join("..", "..", "tests", "data", "check_data", "1.out")
 
-        os.remove("~temp")
-
         new_mock = mock.Mock(wait=wait, returncode=1)
         new_mock.return_value = 0
         with mock.patch("subprocess.Popen", return_value=new_mock):
-            out = sys.stdout
-            with open("~temp", "w") as f:
-                sys.stdout = f
+            with io.StringIO() as buf, redirect_stdout(buf):
                 self.runner.run()
-        sys.stdout = out
-        with open("~temp", "r") as f:
-            self.assertEqual("1\nThe return value is 1. There may be issues with the program running.\n", f.read())
+                output = buf.getvalue()
+                self.assertEqual("1\nThe return value is 1. There may be issues with the program running.\n", output)
 
         self.runner.args.onlyinput = False
         self.runner.args.onlyoutput = False
 
-        os.remove("~temp")
-
         new_mock = mock.Mock(wait=wait, returncode=1)
         new_mock.return_value = 0
         with mock.patch("subprocess.Popen", return_value=new_mock):
-            out = sys.stdout
-            with open("~temp", "w") as f:
-                sys.stdout = f
+            with io.StringIO() as buf, redirect_stdout(buf):
                 self.runner.run()
-        sys.stdout = out
-        with open("~temp", "r") as f:
-            self.assertEqual("1\nThe return value is 1. There may be issues with the program running.\n", f.read())
+                output = buf.getvalue()
+                self.assertEqual("1\nThe return value is 1. There may be issues with the program running.\n", output)
 
     def test_judge(self):
         sys.argv = ["BetterRunner.py", "test"]
@@ -323,26 +283,18 @@ class Testrun(unittest.TestCase):
         with mock.patch("OiRunner.BetterRunner.Functions._modify_file", return_value=3):
             with mock.patch("OiRunner.BetterRunner.Functions._output", side_effect=mock_new_dir):
                 with mock.patch("OiRunner.BetterRunner.BetterRunner._check", return_value=True):
-                    out = sys.stdout
-                    with open("~temp", "w") as f:
-                        sys.stdout = f
+                    with io.StringIO() as buf, redirect_stdout(buf):
                         self.runner.run()
-
-                    with open("~temp", "r") as f:
-                        self.assertEqual("#final:Accuracy 100.00%\n", f.read())
-                    self.assertFalse(os.path.exists("~tmp"))
-
-                os.remove("~temp")
+                        output = buf.getvalue()
+                        self.assertEqual("#final:Accuracy 100.00%\n", output)
+                        self.assertFalse(os.path.exists("~tmp"))
 
                 with mock.patch("OiRunner.BetterRunner.BetterRunner._check", return_value=False):
-                    with open("~temp", "w") as f:
-                        sys.stdout = f
+                    with io.StringIO() as buf, redirect_stdout(buf):
                         self.runner.run()
-
-                    with open("~temp", "r") as f:
-                        self.assertEqual("#final:Accuracy 0.00%\n", f.read())
-                    self.assertFalse(os.path.exists("~tmp"))
-                sys.stdout = out
+                        output = buf.getvalue()
+                        self.assertEqual("#final:Accuracy 0.00%\n", output)
+                        self.assertFalse(os.path.exists("~tmp"))
 
     @mock.patch("subprocess.Popen")
     def test_gdb(self, mock_sp):
@@ -372,9 +324,8 @@ class Testrun(unittest.TestCase):
         self.runner.args.judge = False
         self.runner.args.freopen = True
 
-        out = sys.stdout
-        sys.stdout = None
-        self.runner.run()
+        with io.StringIO() as buf, redirect_stdout(buf):
+            self.runner.run()
 
         def mock_new_dir(a, b):
             os.mkdir("~tmp")
@@ -383,10 +334,39 @@ class Testrun(unittest.TestCase):
         with mock.patch("OiRunner.BetterRunner.Functions._modify_file", return_value=3):
             with mock.patch("OiRunner.BetterRunner.Functions._output", side_effect=mock_new_dir):
                 with mock.patch("OiRunner.BetterRunner.BetterRunner._check", return_value=True):
-                    self.runner.run()
+                    with io.StringIO() as buf, redirect_stdout(buf):
+                        self.runner.run()
         self.assertEqual(mock_delete_freopen.call_count, 2)
         mock_delete_freopen.assert_called_with("test.cpp")
-        sys.stdout = out
+
+    @mock.patch.dict(os.environ, {"__client_id": "test_client_id", "_uid": "test_uid"})
+    @mock.patch("OiRunner.submit.Submit.upload_answer", return_value="test")
+    @mock.patch("OiRunner.submit.Submit.get_record")
+    @mock.patch("OiRunner.submit.Submit._get_csrf_token")
+    @mock.patch("subprocess.Popen")
+    def test_remote_judge(self, _, _get_token, get_record, upload):
+        sys.argv = ["BetterRunner.py", "test"]
+        self.runner.cmd_parse()
+        self.runner.args.remote = "test"
+        self.runner.args.judge = False
+
+        with io.StringIO() as buf, redirect_stdout(buf):
+            self.runner.run()
+
+        def mock_new_dir(a, b):
+            os.mkdir("~tmp")
+
+        self.runner.args.judge = True
+        with mock.patch("OiRunner.BetterRunner.Functions._modify_file", return_value=3):
+            with mock.patch("OiRunner.BetterRunner.Functions._output", side_effect=mock_new_dir):
+                with mock.patch("OiRunner.BetterRunner.BetterRunner._check", return_value=True):
+                    with io.StringIO() as buf, redirect_stdout(buf):
+                        self.runner.run()
+
+        self.assertEqual(upload.call_count, 2)
+        self.assertEqual(get_record.call_count, 2)
+        upload.assert_called_with("test", "test.cpp", True, 11)
+        get_record.assert_called_with("test", if_show_details=False)
 
 
 class TestMisc(unittest.TestCase):
