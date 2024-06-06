@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from contextlib import redirect_stdout
 import io
+import unittest
 import os
 import sys
 import unittest
