@@ -1,6 +1,6 @@
 # Judge program result
 
-You can add `-j` or `--judge` flag to enable the judging feature.
+You can add `-j` or `--judge` flag to enable the judging feature. You can also add `-r` or `--remote` flag to judge your program on remote platform. [(see details)](./remotejudge.md)
 
 ## File directory structure
 You need four files in your project directory.
