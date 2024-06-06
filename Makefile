@@ -1,20 +1,20 @@
 .PHONY: build install release clean clean-file lint test
 
 build:lint test
-	python3 -m build
+	python -m build
 
 install:build
-	pip3 install .
+	pip install .
 
 release:build
-	python3 -m twine upload dist/*
+	python -m twine upload dist/*
 
 clean:clean-file
 	pip uninstall -y OiRunner
 
 lint:
 	flake8 OiRunner/ tests/ --count --statistics --max-line-length=127
-	mypy OiRunner/
+	mypy OiRunner/ tests/
 
 test:
 	coverage run --source OiRunner -m unittest

@@ -1,8 +1,14 @@
+# Packages for build and release.
 build
 setuptools
 wheel
 twine
 
+# Packages for development.
 flake8
 mypy
 coverage
+types-requests
+
+# Package foe using.
+requests
