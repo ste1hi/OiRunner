@@ -3,7 +3,6 @@ from contextlib import redirect_stdout
 import io
 import unittest
 import os
-import sys
 import shutil
 from OiRunner import BetterRunner
 from .util import GARBAGE, FILEOUT, FREOPEN, clean
