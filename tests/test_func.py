@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from contextlib import redirect_stdout
+import io
 import unittest
 import os
 import sys
@@ -19,15 +21,12 @@ class TestFunction(unittest.TestCase):
 
     def test_modify_file(self):
         for i in range(1, 3):
-            out = sys.stdout
             with self.assertRaises(SystemExit):
-                with open("~temp", "w") as f:
-                    sys.stdout = f
+                with io.StringIO() as buf, redirect_stdout(buf):
                     self.func._modify_file(f"empty{i}.in", "in")
-            self.assertFalse(os.path.exists("~tmp"))
-            with open("~temp", "r") as f:
-                self.assertEqual(f.read(), f"error:empty{i}.in is empty.\n")
-            sys.stdout = out
+                    self.assertFalse(os.path.exists("~tmp"))
+                    output = buf.getvalue()
+                    self.assertEqual(output, f"error:empty{i}.in is empty.\n")
 
         ret_code = self.func._modify_file("a.in", "in")
         self.assertEqual(ret_code, 3)
