@@ -7,6 +7,7 @@ from typing import Dict, MutableMapping, Union
 
 import requests
 
+from .tools import log
 from .util import ACCEPT, BAD_URL, CONTENT_PAT, CONTENT_TYPE, CONTENT_VALUE_PAT, MATE_TAG_PAT
 from .util import PARAMS, QUESTION_URL, RECORD_URL, STATUS_CODE, SUBMIT_URL, USER_AGENT
 
@@ -23,20 +24,25 @@ class Submit:
         '''
         client_id = os.getenv("__client_id")
         uid = os.getenv("_uid")
+        log.logger.debug("Get environment variable.")
 
         if client_id is None or uid is None:
             print("Missing the required environment variable.('__client_id' or '_uid')")
+            log.logger.critical("Missing the required environment variable.('__client_id' or '_uid')")
             sys.exit(12)
 
         self._cookies = {
             '__client_id': client_id,
             '_uid': uid
             }
+        log.logger.debug(f"Set cookies {self._cookies}.")
         self.session = requests.Session()
         self.headers: MutableMapping[str, Union[str, bytes]] = {"User-Agent": USER_AGENT}
+        log.logger.debug("Get csrf token.")
         self._csrf_token = self._get_csrf_token()
         self.headers["Accept"] = ACCEPT
         self.headers["content-type"] = CONTENT_TYPE
+        log.logger.debug(f"Set headers {self.headers}.")
 
     def _get_csrf_token(self) -> str:
         '''
@@ -55,6 +61,8 @@ class Submit:
         self.session.headers = self.headers
         self.session.cookies.update(self._cookies)
         html_content = self.session.get(BAD_URL).text
+        log.logger.debug(f"Request {BAD_URL} to get csrf-token.")
+        log.logger.debug(f"It returned {html_content}.")
 
         # Get csrf-token meta tag in html file.
         meta_tag_pat = re.compile(MATE_TAG_PAT)
@@ -62,16 +70,20 @@ class Submit:
 
         if meta_tag is None:
             print("The server returned anomalous data (which does not contain meta tag).")
+            log.logger.critical("The server returned anomalous data (which does not contain meta tag).")
             sys.exit(21)
 
         # Get content attribute in meta tag.
         meta = meta_tag.group()
+        log.logger.debug(f"Meta tag is {meta}")
         content_pat = re.compile(CONTENT_PAT)
         content_result = re.search(content_pat, meta)
         if content_result is None:
             print("The server returned anomalous data (which does not contain 'content' in meta tag).")
+            log.logger.critical("The server returned anomalous data (which does not contain 'content' in meta tag).")
             sys.exit(22)
         content = content_result.group()
+        log.logger.debug(f"The content of meta tag is {content}")
 
         # Get the value of content attribute.
         content_value_pat = re.compile(CONTENT_VALUE_PAT)
@@ -79,8 +91,11 @@ class Submit:
         # It must include a quote mark.
         if content_value_result is None:  # pragma: no cover
             print("The server returned anomalous data (which does not contain anything in the content attribute of meta tag).")
+            log.logger.critical("The server returned anomalous data "
+                                "(which does not contain anything in the content attribute of meta tag).")
             sys.exit(23)
         content_value = content_value_result.group()
+        log.logger.debug(f"Content value is {content_value}")
 
         token = content_value.strip('"')  # Remove quotes before and after strings
 
@@ -112,6 +127,8 @@ class Submit:
         self.headers["x-csrf-token"] = self._csrf_token
         self.headers["referer"] = question_url
         url = SUBMIT_URL + question
+        log.logger.debug(f"Request url is {url}.")
+        log.logger.debug(f"Request headers are {self.headers}.")
 
         with open(file_path, "r") as code_file:
             code = code_file.read()
@@ -121,13 +138,14 @@ class Submit:
             "lang": lang,
             "code": code
         }
-
+        log.logger.info("Request api.")
         response = self.session.post(url=url, json=data)
 
         try:
             return str(response.json()["rid"])
         except KeyError:
             print(f"An error occurred while uploading the answer, with the server returning: \n {response.text}")
+            log.logger.critical(f"An error occurred while uploading the answer, with the server returning: \n {response.text}")
             sys.exit(24)
 
     def get_record(self, rid: str, retry_interval: float = 1,
@@ -145,27 +163,33 @@ class Submit:
             if_show_details -- Whether to show the details of record.
         '''
         record_url = RECORD_URL + rid
+        log.logger.debug(f"Record url is {record_url}.")
         self.headers.pop("referer", None)
         self.headers.pop("content-type", None)
 
         counter = 0
         while True:
             counter += 1
+            log.logger.debug(f"Retry count {counter}.")
             time.sleep(retry_interval)
             if retry_count != -1 and counter > retry_count:
                 return None
 
             record = self.session.get(url=record_url, params=PARAMS)
+            log.logger.debug(f"Record is {record}.")
             data = record.json()["currentData"]
             judge_result: Dict[str, dict] = data["record"]["detail"]["judgeResult"]
             test_case_groups: dict = data["testCaseGroup"]
             case_counter = 0
+            finished_test = judge_result["finishedCaseCount"]
 
             for test_case_group in test_case_groups:
                 case_counter += len(test_case_group)
 
-            if case_counter == judge_result["finishedCaseCount"]:
+            if case_counter == finished_test:
+                log.logger.debug("All tests are finished.")
                 break
+            log.logger.debug(f"The number of tests is {case_counter}, already have finished {finished_test}.")
 
         total_score = 0
         if type(judge_result["subtasks"]) is list:
@@ -174,6 +198,7 @@ class Submit:
             subtasks = list(judge_result["subtasks"].values())
         for subtask in subtasks:
             total_score += subtask["score"]
+        log.logger.debug(f"Subtasks are {subtasks}.")
 
         if if_show_details:
             print("\ndetails:")

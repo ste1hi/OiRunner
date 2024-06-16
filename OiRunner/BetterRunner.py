@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
-import subprocess as sp
 import argparse
-import sys
 import os
 import re
 import shutil
+import subprocess as sp
+import sys
 import time
 from typing import Optional
 
 from .submit import Submit
+from .tools import log
 
 
 class Functions:
@@ -38,6 +39,7 @@ class Functions:
         flag = 0
         if not os.path.exists("~tmp"):
             os.mkdir("~tmp")
+            log.logger.info("Make ~tmp directory.")
         with open(file_name, "r") as f:
             for line in f:
                 file_path = os.path.join("~tmp", f"{i}.{file_type}")
@@ -47,7 +49,9 @@ class Functions:
                 else:
                     if not a:
                         print(f"error:{file_name} is empty.")
+                        log.logger.critical(f"error:{file_name} is empty.")
                         shutil.rmtree("~tmp")
+                        log.logger.info("Delete ~tmp directory.")
                         sys.exit(11)
                     with open(file_path, "w") as f:
                         f.write(a)
@@ -55,7 +59,9 @@ class Functions:
                     a = ""
             if not flag:
                 print(f"error:{file_name} is empty.")
+                log.logger.critical(f"error:{file_name} is empty.")
                 shutil.rmtree("~tmp")
+                log.logger.info("Delete ~tmp directory.")
                 sys.exit(11)
 
         if a:
@@ -83,6 +89,7 @@ class Functions:
 
         with open(opt_file, "w") as out:
             out.write(a)
+        log.logger.info("Write output file.")
 
     def delete_freopen(self, path: str) -> None:
         '''
@@ -92,6 +99,7 @@ class Functions:
             path -- The cpp file path.
         '''
         if not os.path.exists(path):
+            log.logger.critical(f"{path} file not exists.")
             raise ValueError("File not exists.")
 
         with open(path, "r") as file:
@@ -99,12 +107,14 @@ class Functions:
 
         back_file_path = os.path.join(os.path.dirname(path), os.path.basename(path) + ".bak")
         shutil.copy2(path, back_file_path)
+        log.logger.info(f"Backup file is made in {back_file_path}.")
 
         re_match = r'freopen(\s)*\((\s)*"(\w)*\.{0,1}(\w)*"(\s)*,(\s)*"\w"(\s)*,(\s)*std\w{2,3}(\s)*\)(\s)*[,|;]'
         changed_content = re.sub(re_match, "", content)
 
         with open(path, "w") as file:
             file.write(changed_content)
+        log.logger.info("Delete freopen.")
 
 
 class BetterRunner:
@@ -141,6 +151,7 @@ class BetterRunner:
             self.args.name = "./" + self.args.name + ".out"
         elif sys.platform == "win32":
             self.args.name = self.args.name + ".exe"
+        log.logger.debug(f"Output file name is set to {self.args.name}")
 
     def compile(self) -> None:
         '''
@@ -156,13 +167,16 @@ class BetterRunner:
             compile.wait()
             if compile.returncode == 0:
                 print("Compilation successful.")
+                log.logger.info("Compilation successful.")
             else:
                 print("Compilation failed.")
+                log.logger.critical("Compilation failed.")
                 sys.exit(1)
 
         # Can't sent Ctrl+c and get the messages.
         except KeyboardInterrupt:  # pragma: no cover
             print("\nManually exit, wish AC~(^ v ^)")
+            log.logger.info("Manually exit.")
             sys.exit()
 
     def _check(self, opt_file: str, ipt_file: str, ans_file: str,
@@ -203,6 +217,8 @@ class BetterRunner:
 
             if run.returncode != 0:
                 print(f"The return value is {run.returncode}. There may be issues with the program running.")
+                log.logger.error(f"The return value is {run.returncode}. There may be issues with the program running.")
+        log.logger.debug("Program completed.")
 
         with open(ans_file, "r") as ans, open(opt_file, "r") as my_ans:
             ans_list = [line.rstrip() for line in ans if line.rstrip()]
@@ -212,6 +228,7 @@ class BetterRunner:
                     print(f"Correct answer, takes {now:.5} seconds.")
                 else:
                     print("Correct answer.")
+                log.logger.debug("Judgement finished.")
                 return True
             else:
                 if if_print:
@@ -219,6 +236,7 @@ class BetterRunner:
                         print(f"Standard answer:{ans_list}\nYour answer:{my_ans_list}")
                     else:
                         print("The number of answer lines is too large.")
+                        log.logger.info("The number of answer lines is too large.")
                     print("Wrong answer.")
                     print("Error data:")
                     with open(ipt_file, "r") as _in:
@@ -231,9 +249,10 @@ class BetterRunner:
                             print(data)
                         else:
                             print("The number of data words is too large.")
+                            log.logger.info("The number of data words is too large.")
                 else:
                     print("Wrong answer.")
-
+                log.logger.debug("Judgement finished.")
                 return False
 
     def run(self) -> None:
@@ -241,6 +260,7 @@ class BetterRunner:
         try:
             if self.args.directgdb:
                 gdb = sp.Popen(["gdb", self.args.name])
+                log.logger.info("GDB is started.")
                 gdb.wait()
                 sys.exit()
 
@@ -252,8 +272,10 @@ class BetterRunner:
 
                 if os.path.exists("~tmp"):
                     shutil.rmtree("~tmp")
+                    log.logger.info("Delete ~tmp directory.")
                 self.func._modify_file(self.input_file, "in")
                 i = self.func._modify_file(self.answer_file, "ans")
+                log.logger.info(f"The number of test data is {i}.")
 
                 for file_num in range(1, i + 1):
                     out_file = os.path.join("~tmp", f"{file_num}.out")
@@ -266,12 +288,14 @@ class BetterRunner:
                 print(f"#final:Accuracy{((i - flag) / i): .2%}")
                 self.func._output(i, self.output_file)
                 shutil.rmtree("~tmp")
+                log.logger.info("Delete ~tmp directory.")
 
                 if flag == 0 and self.args.freopen:
                     self.func.delete_freopen(self.args.filename + ".cpp")
 
                 if flag == 0 and self.args.remote is not None:
                     print("\nSubmitting to remote judge.")
+                    log.logger.info("Submitting to remote judge.")
                     self.submit = Submit()
                     enableO2 = not self.args.disabledO2
                     rid = self.submit.upload_answer(self.args.remote, self.args.filename + ".cpp",
@@ -280,12 +304,14 @@ class BetterRunner:
 
                 if self.args.gdb and flag > 0:
                     gdb = sp.Popen(["gdb", self.args.name])
+                    log.logger.info("GDB is started.")
                     gdb.wait()
 
             else:
                 if self.args.onlyinput:
                     with open(self.input_file, "r") as _in:
                         print("The file has been executed.")
+                        log.logger.info("The file has been executed.")
                         run = sp.Popen([self.args.name], stdin=_in)
 
                 elif self.args.onlyoutput:
@@ -298,6 +324,7 @@ class BetterRunner:
                 run.wait()
                 if run.returncode != 0:
                     print(f"The return value is {run.returncode}. There may be issues with the program running.")
+                    log.logger.error(f"The return value is {run.returncode}. There may be issues with the program running.")
 
                 if self.args.remote is not None:
                     print("\nSubmitting to remote judge.")
@@ -305,6 +332,7 @@ class BetterRunner:
                     enableO2 = not self.args.disabledO2
                     rid = self.submit.upload_answer(self.args.remote, self.args.filename + ".cpp",
                                                     enableO2, self.args.language)
+                    log.logger.info(f"Submit rid is {rid}.")
                     self.submit.get_record(rid, if_show_details=self.args.print)
 
         # Can't sent Ctrl+c and get the messages.
@@ -312,6 +340,7 @@ class BetterRunner:
             if os.path.exists("~tmp"):
                 shutil.rmtree("~tmp")
             print("\nManually exit, wish AC~(^ v ^)")
+            log.logger.info("Manually exit.")
 
 
 def main():

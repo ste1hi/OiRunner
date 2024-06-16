@@ -4,6 +4,7 @@ import io
 import unittest
 import os
 import unittest.mock
+
 from OiRunner.submit import Submit
 from .util import GARBAGE, HTML_CORRECT, HTML_WITHOUT_META_TAG, HTML_WITHOUT_CONTENT, \
                   WAITING_DATA, RECORD_DATA_WITHOUT_SUBTASKS, \
