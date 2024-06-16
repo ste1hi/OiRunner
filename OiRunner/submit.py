@@ -7,7 +7,7 @@ from typing import Dict, MutableMapping, Union
 
 import requests
 
-from Tools import log
+from .tools import log
 from .util import ACCEPT, BAD_URL, CONTENT_PAT, CONTENT_TYPE, CONTENT_VALUE_PAT, MATE_TAG_PAT
 from .util import PARAMS, QUESTION_URL, RECORD_URL, STATUS_CODE, SUBMIT_URL, USER_AGENT
 

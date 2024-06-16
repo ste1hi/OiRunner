@@ -9,7 +9,7 @@ import time
 from typing import Optional
 
 from .submit import Submit
-from Tools import log
+from .tools import log
 
 
 class Functions:
