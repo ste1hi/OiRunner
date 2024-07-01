@@ -48,6 +48,8 @@ class TestProject(unittest.TestCase):
             os.chdir(os.path.join("tests", "data"))
         self.work_path = os.getcwd()
         # Work directory is OiRunner/tests/data/test_setting/create.
+        if not os.path.exists(os.path.join("test_setting", "create")):
+            os.mkdir(os.path.join("test_setting", "create"))
         os.chdir(os.path.join("test_setting", "create"))
 
     def tearDown(self):
