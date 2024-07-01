@@ -9,10 +9,11 @@
 
 This package is designed to help oier compile the cpp file conveniently.
 
-## Feature
+## Features
 
 - Compile cpp file.
 - Judge program result.
+- Project manager.
 - Super easy to use, you don't need write more source code, just use in command line.
 
 ## Install
@@ -30,6 +31,14 @@ oirun <your_program_file_name>
 ```
 
 This command will compile your program file and run the executable file in command line directly.
+
+## Project Manager
+```bash
+oirunner make <project name>
+```
+This command will make a project named `<project name>` in current directory. In the directory, some files will be created. `in.txt` will be created as input file, `out.txt` will be created as output file, `ans.txt` will be created as answer file. If you want to name these files like `<project name>.in`, add the `-f` or `--follow_project` flag.
+
+If `cpp` file was expected to be created, add the `-c` or `--cpp` flag. The `<project name>.cpp` will be created.
 
 ## Advanced Usage
 

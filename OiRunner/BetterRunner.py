@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import argparse
+import json
 import os
 import re
 import shutil
-import subprocess as sp
 import sys
+import subprocess as sp
 import time
 from typing import Optional
 
@@ -119,21 +120,30 @@ class Functions:
 
 class BetterRunner:
     def __init__(self) -> None:
-        self.input_file = "in.txt"
-        self.output_file = "out.txt"
-        self.answer_file = "ans.txt"
+        if os.path.exists(".OiRunner"):
+            settings_path = os.path.join(".OiRunner", "settings.json")
+            with open(settings_path, "r") as f:
+                settings = json.load(f)
+            self.input_file = settings["input_file"]
+            self.output_file = settings["output_file"]
+            self.answer_file = settings["answer_file"]
+        else:
+            self.input_file = "in.txt"
+            self.output_file = "out.txt"
+            self.answer_file = "ans.txt"
         self.func = Functions()
 
     def cmd_parse(self) -> None:
         '''Parse the command'''
+
         pa = argparse.ArgumentParser()
         pa.add_argument("filename", help="CPP file to be compiled (omitting '. cpp').")
         pa.add_argument("-n", "--name", default="a", help="Generate executable file name (omit '. exe').")
         pa.add_argument("-j", "--judge", action="store_true", help="Whether to evaluate.")
-        pa.add_argument("-p", "--print", action="store_true", help="Whether to print details.")
-        pa.add_argument("-if", "--inputfile", default="in.txt", help="Input file name.")
-        pa.add_argument("-of", "--outputfile", default="out.txt", help="Output file name.")
-        pa.add_argument("-af", "--answerfile", default="ans.txt", help="Answer file name.")
+        pa.add_argument("-p", "--print", action="store_true", help="Whether to print.")
+        pa.add_argument("-if", "--inputfile", help="Input file name.")
+        pa.add_argument("-of", "--outputfile", help="Output file name.")
+        pa.add_argument("-af", "--answerfile", help="Answer file name.")
         pa.add_argument("-g", "--gdb", action="store_true", help="Whether to debug via gdb when the answer is incorrect.")
         pa.add_argument("-f", "--freopen", action="store_true", help="Add or delete freopen command.")
         pa.add_argument("-d", "--directgdb", action="store_true", help="Directly using gdb for debugging.")
@@ -144,9 +154,9 @@ class BetterRunner:
         pa.add_argument("--onlyinput", action="store_true", help="Using file input (invalid for - j).")
         pa.add_argument("--onlyoutput", action="store_true", help="Using file output (invalid when - j).")
         self.args = pa.parse_args()
-        self.input_file = self.args.inputfile
-        self.output_file = self.args.outputfile
-        self.answer_file = self.args.answerfile
+        self.input_file = self.input_file if self.args.inputfile is None else self.args.inputfile
+        self.output_file = self.output_file if self.args.outputfile is None else self.args.outputfile
+        self.answer_file = self.answer_file if self.args.answerfile is None else self.args.answerfile
         if sys.platform == "linux":
             self.args.name = "./" + self.args.name + ".out"
         elif sys.platform == "win32":

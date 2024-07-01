@@ -20,6 +20,7 @@ classifiers = [
 
 [project.scripts]
 oirun = "OiRunner.BetterRunner:main"
+oirunner = "OiRunner.OiRunner:main"
 
 [tool.setuptools.dynamic]
 version = {attr = "OiRunner.__version__"}

@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import os
+import shutil
 
 FILEOUT = "#1:\nfile1\n\n#2:\nfile2\n\n#3:\nfile3\n\n"
-GARBAGE = ["a.out", "a.exe", "~temp", "~err_temp", "~out", ]
+GARBAGE = ["a.out", "a.exe", "~temp", "~err_temp", "~out"]
 FREOPEN = 'freopen \n        ("in", "r"  , stdin),\n    freopen("out" , "w", stdout);'
 HTML_WITHOUT_META_TAG = '<html><meta name="not_csrf" content></meta></html>'
 HTML_WITHOUT_CONTENT = '<html><meta name="csrf-token" ></meta></html>'
@@ -100,4 +101,7 @@ DETAILS_OUTPUT = "\ndetails:\nCase:1\nscore:50\nstatus:AC\ndescription:"\
 def clean(filelist):
     for filename in filelist:
         if os.path.exists(filename):
-            os.remove(filename)
+            if os.path.isdir(filename):
+                shutil.rmtree(filename)
+            else:
+                os.remove(filename)

@@ -49,6 +49,18 @@ class TestRunner(unittest.TestCase):
                 output = buf.getvalue()
                 self.assertEqual(output, "Compilation failed.\n")
 
+    def test_init(self):
+        self.assertEqual(self.runner.input_file, "in.txt")
+        self.assertEqual(self.runner.output_file, "out.txt")
+        self.assertEqual(self.runner.answer_file, "ans.txt")
+
+        os.chdir("test_setting")
+        self.runner = BetterRunner.BetterRunner()
+        self.assertEqual(self.runner.input_file, "1.in")
+        self.assertEqual(self.runner.output_file, "1.out")
+        self.assertEqual(self.runner.answer_file, "1.ans")
+        os.chdir("../")
+
 
 class TestParser(unittest.TestCase):
 
@@ -103,9 +115,9 @@ class TestParser(unittest.TestCase):
             elif plt == "win32":
                 self.assertEqual(self.runner.args.name, "a.exe")
 
-            self.assertEqual(self.runner.args.inputfile, "in.txt")
-            self.assertEqual(self.runner.args.outputfile, "out.txt")
-            self.assertEqual(self.runner.args.answerfile, "ans.txt")
+            self.assertEqual(self.runner.input_file, "in.txt")
+            self.assertEqual(self.runner.output_file, "out.txt")
+            self.assertEqual(self.runner.answer_file, "ans.txt")
 
         sys.platform = "linux"
         self.runner.cmd_parse()
