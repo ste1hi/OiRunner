@@ -4,7 +4,6 @@ import io
 import unittest
 import os
 import sys
-import unittest
 from unittest import mock
 
 from OiRunner import BetterRunner
