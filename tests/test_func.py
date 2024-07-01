@@ -4,7 +4,7 @@ import io
 import unittest
 import os
 import shutil
-import unittest
+
 from OiRunner import BetterRunner
 
 from .util import GARBAGE, FILEOUT, FREOPEN, clean
