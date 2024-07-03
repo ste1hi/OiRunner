@@ -1,4 +1,4 @@
-# OiHelper
+# OiRunner
 
 [![Test and Lint](https://img.shields.io/github/actions/workflow/status/ste1hi/OiRunner/main.yml?logo=github&label=Test%20and%20Lint)](https://github.com/ste1hi/OiRunner/actions/workflows/main.yml)
 ![last commit](https://img.shields.io/github/last-commit/ste1hi/OiRunner)
