@@ -69,6 +69,13 @@ class TestProject(unittest.TestCase):
         error.assert_called_with("The subcommand is required.")
         help.assert_called_once()
 
+    # It's a regression test. See details:https://github.com/ste1hi/OiRunner/issues/23
+    def test_create_project_more_than_one_question(self):
+        self.oirunner.make("test", 2, False, False)
+        self.assertTrue(os.path.exists("T1"))
+        self.assertTrue(os.path.exists("T2"))
+        self.assertTrue(os.path.exists(".OiRunner"))
+
     def test_make(self):
         os.chdir("..")  # In test_setting, .OiRunner folder already exist.
         with self.assertRaises(Exceptions.ProjectAlreadyExists):
