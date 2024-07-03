@@ -36,9 +36,9 @@ This command will compile your program file and run the executable file in comma
 ```bash
 oirunner make <project name>
 ```
-This command will make a project named `<project name>` in current directory. In the directory, some files will be created. `in.txt` will be created as input file, `out.txt` will be created as output file, `ans.txt` will be created as answer file. If you want to name these files like `<project name>.in`, add the `-f` or `--follow_project` flag.
+This command will make a project named `<project name>` in current directory. In the directory, some files will be created. `in.txt` will be created as input file, `out.txt` will be created as output file, `ans.txt` will be created as answer file. If you want to name these files like `<question name>.in`, add the `-f` or `--follow_question` flag.
 
-If `cpp` file was expected to be created, add the `-c` or `--cpp` flag. The `<project name>.cpp` will be created.
+If `cpp` file was expected to be created, add the `-c` or `--cpp` flag. The `<question name>.cpp` will be created.
 
 ## Advanced Usage
 
