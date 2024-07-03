@@ -89,8 +89,8 @@ class OiRunner():
                 open(f"T{question_number}.cpp", "x").close()
                 question_setting[str(question_number)]["cpp"] = f"T{question_number}.cpp"
             settings["questions"] = question_setting
+            os.chdir("..")
 
-        os.chdir("..")
         with open(settings_path, "w") as set:
             json.dump(settings, set)
 
