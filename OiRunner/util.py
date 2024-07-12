@@ -22,3 +22,5 @@ STATUS_CODE = {
     7: "RE",
     6: "WA"
     }
+
+HOOK_FILE_NAME = ["hook_remote_judge.py", "hook_local_judge.py"]

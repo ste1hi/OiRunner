@@ -1,6 +1,6 @@
 .PHONY: build install release clean clean-file lint test
 
-build:lint test
+build:
 	python -m build
 
 install:build

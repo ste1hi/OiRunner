@@ -2,3 +2,7 @@
 
 class ProjectAlreadyExists(Exception):
     pass
+
+
+class EnableHookError(Exception):
+    pass

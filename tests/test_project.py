@@ -9,6 +9,7 @@ from contextlib import redirect_stdout
 from unittest import mock
 
 from OiRunner import Exceptions, OiRunner
+from OiRunner.util import HOOK_FILE_NAME
 from .util import GARBAGE, clean
 
 SET_DEFAULT = {
@@ -85,6 +86,17 @@ class TestProject(unittest.TestCase):
         self.oirunner.make("test", 1, False, False)
         settings_file = os.path.join(".OiRunner", "settings.json")
         self.assertTrue(os.path.exists(settings_file))
+
+        self.assertTrue(os.path.exists(os.path.join(".OiRunner", "hooks")))
+
+        os.chdir(os.path.join(".OiRunner", "hooks"))
+
+        for file_name in HOOK_FILE_NAME:
+            file_name += ".bak"
+            self.assertTrue(os.path.exists(file_name))
+
+        os.chdir(os.path.join("..", ".."))
+
         self.assertTrue(os.path.exists("T1"))
         self.assertTrue(os.path.exists(os.path.join("T1", "in.txt")))
         self.assertTrue(os.path.exists(os.path.join("T1", "out.txt")))
@@ -116,11 +128,25 @@ class TestProject(unittest.TestCase):
 
         self.assertEqual(settings, SET_CHANGED)
 
+    def test_set_hook(self):
+        with self.assertRaises(Exceptions.EnableHookError):
+            self.oirunner.sethook(HOOK_FILE_NAME[0])
+        self.oirunner._create_file(HOOK_FILE_NAME[0] + ".bak")
+        self.oirunner.sethook(HOOK_FILE_NAME[0])
+        self.assertFalse(os.path.exists(HOOK_FILE_NAME[0] + ".bak"))
+        self.assertTrue(os.path.exists(HOOK_FILE_NAME[0]))
+
     @mock.patch("OiRunner.OiRunner.OiRunner.make")
-    def test_run_correct(self, make):
+    def test_run_make(self, make):
         sys.argv = ["OiRunner.py", "make", "test", "-q", "1"]
         self.oirunner.run()
         make.assert_called_with("test", 1, False, False)
+
+    @mock.patch("OiRunner.OiRunner.OiRunner.sethook")
+    def test_run_sethook(self, make):
+        sys.argv = ["OiRunner.py", "sethook", HOOK_FILE_NAME[0]]
+        self.oirunner.run()
+        make.assert_called_with(HOOK_FILE_NAME[0])
 
     def test_run_fail(self):
         sys.argv = ["OiRunner.py", "make", "test", "-q", "1"]
@@ -149,3 +175,17 @@ class TestProject(unittest.TestCase):
                     output = buf.getvalue()
                     self.assertEqual(output, "error:This directory already have existed some files.\n")
                     self.assertEqual(exc.exception.code, 32)
+
+    def test_run_enable_hook_error(self):
+        sys.argv = ["OiRunner.py", "sethook", HOOK_FILE_NAME[0]]
+
+        def side_effect(a):  # Mock make method effect when enable hook file failed.
+            raise Exceptions.EnableHookError
+
+        with mock.patch("OiRunner.OiRunner.OiRunner.sethook", side_effect=side_effect):
+            with self.assertRaises(SystemExit) as exc:
+                with io.StringIO() as buf, redirect_stdout(buf):
+                    self.oirunner.run()
+                    output = buf.getvalue()
+                    self.assertEqual(output, "error:Hook file not exist.\n")
+                    self.assertEqual(exc.exception.code, 33)
